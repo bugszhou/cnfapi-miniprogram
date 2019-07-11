@@ -18,6 +18,11 @@
         "commit": "ziu commit",
         "prepublishOnly": "npm run build"
     },
+    "repositury": {
+        "type": "git",
+        "url": "git+https://github.com/bugszhou/cnfapi-miniprogram.git"
+    },
+    "homepage": "https://github.com/bugszhou/cnfapi-miniprogram#readme",
     "dependencies": {
         "@babel/runtime": "^7.5.4",
         "@babel/runtime-corejs2": "^7.5.4",
