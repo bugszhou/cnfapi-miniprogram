@@ -1,2 +1,4 @@
-# cnfapi-miniprogram
-小程序接口请求
+## cnfapi-miniprogram
+----------------------------
+author: bugszhou | Email:bugszhou@outlook.com <br>
+description: A lib project with ziu
