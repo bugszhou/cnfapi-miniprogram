@@ -342,7 +342,7 @@ function getProxy(fn, apiConfig = {}) {
               apiConfig.statusText = res.statusText;
 
               const isOpenResInterceptor = typeof apiOpts.openResInterceptor === 'function' && apiOpts.openResInterceptor.call(apiConfig, serverData);
-              if (isOpenResInterceptor && reqTime < (retryTimes + 2)) {
+              if (isOpenResInterceptor && reqTime < (retryTimes + ( retryTimes ? 1: 2))) {
                 return apiOpts.resInterceptor.call(apiConfig, serverData, (err, nOpts = {}) => {
                   if (err) {
                     return reject(err);
