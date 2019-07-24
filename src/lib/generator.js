@@ -343,7 +343,10 @@ function getProxy(fn, apiConfig = {}) {
 
               const isOpenResInterceptor = typeof apiOpts.openResInterceptor === 'function' && apiOpts.openResInterceptor.call(apiConfig, serverData);
               if (isOpenResInterceptor && reqTime < (retryTimes + 2)) {
-                return apiOpts.resInterceptor.call(apiConfig, serverData, (nOpts = {}) => {
+                return apiOpts.resInterceptor.call(apiConfig, serverData, (err, nOpts = {}) => {
+                  if (err) {
+                    return reject(err);
+                  }
                   const data = merge(reqData.data, nOpts.data),
                     headers = merge(apiOpts.headers, nOpts.headers);
                   reqData.data = data;
