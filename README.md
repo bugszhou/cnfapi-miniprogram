@@ -43,6 +43,15 @@ const api = new Api({
       }, {}, data.code);
     }
   },
+  // 是否开启response拦截器
+  openResInterceptor(res) {
+    return true;
+  },
+  // response拦截器处理函数
+  // openResInterceptor返回true执行方法
+  resInterceptor(next) {
+    next();
+  },
 }, {
      getList: {
        interval: 2000, // 每隔2秒重试一次
@@ -122,3 +131,4 @@ api._before = function _before(apiOpts, apiConf, next) {
   next(apiOpts);
 };
 ```
+
