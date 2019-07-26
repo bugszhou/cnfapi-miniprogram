@@ -73,7 +73,7 @@ const https = {
       if (config.method.toUpperCase() === 'GET') {
         delete opts.data;
       }
-      my.httpRequest(opts);
+      my.request(opts);
     }));
   },
   weapp(config) {
