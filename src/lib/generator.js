@@ -305,6 +305,14 @@ function getProxy(fn, apiConfig = {}) {
               fnName: apiOpts.fnName,
             });
 
+            if (apiOpts.err) {
+              return reject({
+                retcode: apiOpts.err.retcode,
+                msg: apiOpts.err.msg,
+                headers: apiConfig.headers,
+              });
+            }
+
             if (retData.retcode !== retcode.OK) {
               return reject({
                 retcode: retData.retcode,
