@@ -26,7 +26,7 @@ export default {
     },
     {
       file: 'dist/cnfapi-miniprogram.esm.js',
-      format: 'es',
+      format: 'esm',
       sourcemap: true,
       strict: true,
     },

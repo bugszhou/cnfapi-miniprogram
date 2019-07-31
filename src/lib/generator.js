@@ -39,6 +39,7 @@ export function generator(list = {}, opts = {}, _this = {}) {
     let fnName = isArray ? item.name : item,
       listVal = isArray ? item : list[item];
 
+    listVal.name = fnName;
     if (!fnName) {
       throw new Error(`Function name is required!`);
     }
@@ -335,6 +336,7 @@ function getProxy(fn, apiConfig = {}) {
               data: data.postData,
               qs: data.qs,
               params: data.getData,
+              getRequestTask: apiOpts.getRequestTask,
             }).then((res) => {
               /**
                * [res 数据结构]

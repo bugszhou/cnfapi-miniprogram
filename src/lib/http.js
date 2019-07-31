@@ -73,7 +73,7 @@ const https = {
       if (config.method.toUpperCase() === 'GET') {
         delete opts.data;
       }
-      my.request(opts);
+      requestCallBack(my.request(opts));
     }));
   },
   weapp(config) {
@@ -132,7 +132,7 @@ const https = {
       if (config.method.toUpperCase() === 'GET') {
         delete opts.data;
       }
-      wx.request(opts);
+      requestCallBack(wx.request(opts));
     }));
   },
   swan(config) {
@@ -191,10 +191,16 @@ const https = {
       if (config.method.toUpperCase() === 'GET') {
         delete opts.data;
       }
-      swan.request(opts);
+      requestCallBack(swan.request(opts));
     }));
   },
 };
+
+function requestCallBack(config = {}, task) {
+  if (config && config.getRequestTask && typeof config.getRequestTask === 'function') {
+    config.getRequestTask(task);
+  }
+}
 
 export default function(opts) {
   if (typeof https[opts.env] !== 'function') {
