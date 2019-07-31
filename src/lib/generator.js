@@ -352,7 +352,7 @@ function getProxy(fn, apiConfig = {}) {
               apiConfig.statusText = res.statusText;
 
               const isOpenResInterceptor = typeof apiOpts.openResInterceptor === 'function' && apiOpts.openResInterceptor.call(apiConfig, serverData);
-              if (isOpenResInterceptor && reqTime < (retryTimes + ( retryTimes ? 1: 2))) {
+              if (isOpenResInterceptor && reqTime < (retryTimes + (retryTimes ? 1 : 2))) {
                 return apiOpts.resInterceptor.call(apiConfig, serverData, (err, nOpts = {}) => {
                   if (err) {
                     return reject(err);
@@ -419,6 +419,13 @@ function getProxy(fn, apiConfig = {}) {
               //     request();
               // });
             }, (err) => {
+              const errJSONMsg = JSON.stringify(err);
+              if (errJSONMsg.toLowerCase().includes('abort')) {
+                return reject(fail({
+                  retcode: retcode.OTHER,
+                  msg: getType(err) === 'error' ? err.toString() : JSON.stringify(err),
+                }));
+              }
               retry(reqTime, retryTimes, interval, (isEnd) => {
                 if (isEnd) {
                   reqTime = 0;
