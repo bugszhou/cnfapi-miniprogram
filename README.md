@@ -86,6 +86,7 @@ const api = new Api({
    // http请求调用方式
    // 1. 常规方式
    api.getList({
+     getRequestTask: (tesk) => {}, // 获取请求任务对象task，task对象可对中断请求任务等功能
      data: {
        param1: 'param1',
        param2: 'param2',
@@ -113,6 +114,8 @@ const api = new Api({
    });
 
 ```
+
+- task功能[点击查看](https://developers.weixin.qq.com/miniprogram/dev/api/network/request/RequestTask.html)
 
 ### request拦截器
 
