@@ -393,7 +393,7 @@ function getProxy(fn, apiConfig = {}) {
                 });
               }
               if (typeof apiOpts.resSuccessCallback === 'function') {
-                apiOpts.resSuccessCallback(serverData, (err, resData, retcode = 200) => {
+                return apiOpts.resSuccessCallback(serverData, (err, resData, retcode = 200) => {
                   if (!err) {
                     reqTime = 0;
                     /**
@@ -402,6 +402,14 @@ function getProxy(fn, apiConfig = {}) {
                     if (!isEmpty(apiConfig.model)) {
                       resData = modelFn(apiConfig.model, resData);
                     }
+                    ctx.emit('cnfapi:res:resolve', {
+                      fnName: apiOpts.fnName,
+                      ...success({
+                        data: resData,
+                        headers: res.headers,
+                        retcode,
+                      }),
+                    });
                     return resolve(success({
                       data: resData,
                       headers: res.headers,
@@ -502,7 +510,7 @@ function getProxy(fn, apiConfig = {}) {
               });
             }).catch((catchErr) => {
               reqTime = 0;
-              ctx.emit('cnfapi:res:reject', {
+              ctx.emit('cnfapi:res:catch', {
                 fnName: apiOpts.fnName,
                 ...fail({
                   retcode: retcode.CATCH,
