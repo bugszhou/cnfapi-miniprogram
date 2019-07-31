@@ -308,6 +308,7 @@ function getProxy(fn, apiConfig = {}) {
 
             if (apiOpts.err) {
               ctx.emit('cnfapi:res:reject', {
+                fnName: apiOpts.fnName,
                 retcode: apiOpts.err.retcode,
                 msg: apiOpts.err.msg,
                 headers: apiConfig.headers,
@@ -321,6 +322,7 @@ function getProxy(fn, apiConfig = {}) {
 
             if (retData.retcode !== retcode.OK) {
               ctx.emit('cnfapi:res:reject', {
+                fnName: apiOpts.fnName,
                 retcode: retData.retcode,
                 msg: retData.errMsg,
                 headers: apiConfig.headers,
@@ -337,6 +339,7 @@ function getProxy(fn, apiConfig = {}) {
               reqUrl = getRestfulUrl(reqUrl, apiOpts.restful);
             }
             ctx.emit('cnfapi:req:before', {
+              fnName: apiOpts.fnName,
               url: reqUrl,
               timeout: apiConfig.timeout,
               env: apiConfig.env,
@@ -375,7 +378,10 @@ function getProxy(fn, apiConfig = {}) {
               if (isOpenResInterceptor && reqTime < (retryTimes + (retryTimes ? 1 : 2))) {
                 return apiOpts.resInterceptor.call(apiConfig, serverData, (err, nOpts = {}) => {
                   if (err) {
-                    ctx.emit('cnfapi:res:reject', err);
+                    ctx.emit('cnfapi:res:reject', {
+                      fnName: apiOpts.fnName,
+                      ...err
+                    });
                     return reject(err);
                   }
                   const data = merge(reqData.data, nOpts.data),
@@ -402,10 +408,13 @@ function getProxy(fn, apiConfig = {}) {
                       retcode,
                     }));
                   }
-                  ctx.emit('cnfapi:res:reject', err || fail({
-                    retcode: 500,
-                    headers: res.headers,
-                  }));
+                  ctx.emit('cnfapi:res:reject', {
+                    fnName: apiOpts.fnName,
+                    ...(err || fail({
+                      retcode: 500,
+                      headers: res.headers,
+                    })),
+                  });
                   reject(err || fail({
                     retcode: 500,
                     headers: res.headers,
@@ -421,22 +430,28 @@ function getProxy(fn, apiConfig = {}) {
                 if (!isEmpty(apiConfig.model)) {
                   data = modelFn(apiConfig.model, data);
                 }
-                ctx.emit('cnfapi:res:resolve', success({
-                  data,
-                  headers: res.headers,
-                  retcode: serverData.retcode,
-                }));
+                ctx.emit('cnfapi:res:resolve', {
+                  fnName: apiOpts.fnName,
+                  ...success({
+                    data,
+                    headers: res.headers,
+                    retcode: serverData.retcode,
+                  }),
+                });
                 return resolve(success({
                   data,
                   headers: res.headers,
                   retcode: serverData.retcode,
                 }));
               }
-              ctx.emit('cnfapi:res:reject', fail({
-                retcode: serverData.retcode,
-                msg: serverData.msg,
-                headers: res.headers,
-              }));
+              ctx.emit('cnfapi:res:reject', {
+                fnName: apiOpts.fnName,
+                ...fail({
+                  retcode: serverData.retcode,
+                  msg: serverData.msg,
+                  headers: res.headers,
+                }),
+              });
               reject(fail({
                 retcode: serverData.retcode,
                 msg: serverData.msg,
@@ -456,10 +471,13 @@ function getProxy(fn, apiConfig = {}) {
             }, (err) => {
               const errJSONMsg = JSON.stringify(err);
               if (errJSONMsg.toLowerCase().includes('abort')) {
-                ctx.emit('cnfapi:res:reject', fail({
-                  retcode: retcode.OTHER,
-                  msg: getType(err) === 'error' ? err.toString() : JSON.stringify(err),
-                }));
+                ctx.emit('cnfapi:res:reject', {
+                  fnName: apiOpts.fnName,
+                  ...fail({
+                    retcode: retcode.OTHER,
+                    msg: getType(err) === 'error' ? err.toString() : JSON.stringify(err),
+                  }),
+                });
                 return reject(fail({
                   retcode: retcode.OTHER,
                   msg: getType(err) === 'error' ? err.toString() : JSON.stringify(err),
@@ -468,10 +486,13 @@ function getProxy(fn, apiConfig = {}) {
               retry(reqTime, retryTimes, interval, (isEnd) => {
                 if (isEnd) {
                   reqTime = 0;
-                  ctx.emit('cnfapi:res:reject', fail({
-                    retcode: retcode.OTHER,
-                    msg: getType(err) === 'error' ? err.toString() : JSON.stringify(err),
-                  }));
+                  ctx.emit('cnfapi:res:reject', {
+                    fnName: apiOpts.fnName,
+                    ...fail({
+                      retcode: retcode.OTHER,
+                      msg: getType(err) === 'error' ? err.toString() : JSON.stringify(err),
+                    }),
+                  });
                   return reject(fail({
                     retcode: retcode.OTHER,
                     msg: getType(err) === 'error' ? err.toString() : JSON.stringify(err),
@@ -481,10 +502,13 @@ function getProxy(fn, apiConfig = {}) {
               });
             }).catch((catchErr) => {
               reqTime = 0;
-              ctx.emit('cnfapi:res:reject', fail({
-                retcode: retcode.CATCH,
-                msg: getType(catchErr) === 'error' ? catchErr.toString() : JSON.stringify(catchErr),
-              }));
+              ctx.emit('cnfapi:res:reject', {
+                fnName: apiOpts.fnName,
+                ...fail({
+                  retcode: retcode.CATCH,
+                  msg: getType(catchErr) === 'error' ? catchErr.toString() : JSON.stringify(catchErr),
+                }),
+              });
               reject(fail({
                 retcode: retcode.CATCH,
                 msg: getType(catchErr) === 'error' ? catchErr.toString() : JSON.stringify(catchErr),
