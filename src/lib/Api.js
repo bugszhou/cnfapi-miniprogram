@@ -1,7 +1,7 @@
 
 import merge from 'lodash/merge';
 import { generator } from './generator.js';
-import Event from './events.js';
+import EventEmitter from 'events';
 
 /**
  * 获取数据类型
@@ -10,8 +10,9 @@ function getType(val) {
   return Object.prototype.toString.call(val).slice(8, -1).toLowerCase();
 }
 
-class Api {
+class Api extends EventEmitter{
   constructor(conf = {}, apiList = {}) {
+    super();
     const listType = this.getType(apiList);
     if (this.getType(conf) !== 'object' || (listType !== 'object' && listType !== 'array')) {
       throw new Error('constructor params require Object type');

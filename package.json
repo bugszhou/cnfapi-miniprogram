@@ -26,6 +26,7 @@
     "dependencies": {
         "@babel/runtime": "^7.5.4",
         "@babel/runtime-corejs2": "^7.5.4",
+        "events": "^3.0.0",
         "lodash": "^4.17.14",
         "url-parse": "^1.4.7"
     },
@@ -39,7 +40,7 @@
         "@babel/preset-env": "^7.5.4",
         "babel-eslint": "^10.0.2",
         "babel-preset-minify": "^0.5.0",
-        "commitlint": "^8.0.0",
+        "commitlint": "^8.1.0",
         "eslint": "^6.0.1",
         "eslint-config-airbnb": "^17.1.1",
         "eslint-plugin-import": "^2.18.0",
@@ -51,7 +52,7 @@
         "rollup-plugin-commonjs": "^10.0.1",
         "rollup-plugin-node-resolve": "^5.2.0",
         "rollup-plugin-terser": "^5.1.1",
-        "ziu": "^1.6.0"
+        "ziu": "^1.6.2"
     },
     "license": "MIT",
     "browserslist": [
