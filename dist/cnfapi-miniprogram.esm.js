@@ -1,4 +1,5 @@
 import urlParse from 'url-parse';
+import EventEmitter from 'events';
 
 // 7.2.1 RequireObjectCoercible(argument)
 var _defined = function (it) {
@@ -391,6 +392,803 @@ function _createClass(Constructor, protoProps, staticProps) {
 }
 
 var createClass = _createClass;
+
+// true  -> String#at
+// false -> String#codePointAt
+var _stringAt = function (TO_STRING) {
+  return function (that, pos) {
+    var s = String(_defined(that));
+    var i = _toInteger(pos);
+    var l = s.length;
+    var a, b;
+    if (i < 0 || i >= l) return TO_STRING ? '' : undefined;
+    a = s.charCodeAt(i);
+    return a < 0xd800 || a > 0xdbff || i + 1 === l || (b = s.charCodeAt(i + 1)) < 0xdc00 || b > 0xdfff
+      ? TO_STRING ? s.charAt(i) : a
+      : TO_STRING ? s.slice(i, i + 2) : (a - 0xd800 << 10) + (b - 0xdc00) + 0x10000;
+  };
+};
+
+var _redefine = _hide;
+
+var _iterators = {};
+
+var _objectDps = _descriptors ? Object.defineProperties : function defineProperties(O, Properties) {
+  _anObject(O);
+  var keys = _objectKeys(Properties);
+  var length = keys.length;
+  var i = 0;
+  var P;
+  while (length > i) _objectDp.f(O, P = keys[i++], Properties[P]);
+  return O;
+};
+
+var document$2 = _global.document;
+var _html = document$2 && document$2.documentElement;
+
+// 19.1.2.2 / 15.2.3.5 Object.create(O [, Properties])
+
+
+
+var IE_PROTO$1 = _sharedKey('IE_PROTO');
+var Empty = function () { /* empty */ };
+var PROTOTYPE$1 = 'prototype';
+
+// Create object with fake `null` prototype: use iframe Object with cleared prototype
+var createDict = function () {
+  // Thrash, waste and sodomy: IE GC bug
+  var iframe = _domCreate('iframe');
+  var i = _enumBugKeys.length;
+  var lt = '<';
+  var gt = '>';
+  var iframeDocument;
+  iframe.style.display = 'none';
+  _html.appendChild(iframe);
+  iframe.src = 'javascript:'; // eslint-disable-line no-script-url
+  // createDict = iframe.contentWindow.Object;
+  // html.removeChild(iframe);
+  iframeDocument = iframe.contentWindow.document;
+  iframeDocument.open();
+  iframeDocument.write(lt + 'script' + gt + 'document.F=Object' + lt + '/script' + gt);
+  iframeDocument.close();
+  createDict = iframeDocument.F;
+  while (i--) delete createDict[PROTOTYPE$1][_enumBugKeys[i]];
+  return createDict();
+};
+
+var _objectCreate = Object.create || function create(O, Properties) {
+  var result;
+  if (O !== null) {
+    Empty[PROTOTYPE$1] = _anObject(O);
+    result = new Empty();
+    Empty[PROTOTYPE$1] = null;
+    // add "__proto__" for Object.getPrototypeOf polyfill
+    result[IE_PROTO$1] = O;
+  } else result = createDict();
+  return Properties === undefined ? result : _objectDps(result, Properties);
+};
+
+var _wks = createCommonjsModule(function (module) {
+var store = _shared('wks');
+
+var Symbol = _global.Symbol;
+var USE_SYMBOL = typeof Symbol == 'function';
+
+var $exports = module.exports = function (name) {
+  return store[name] || (store[name] =
+    USE_SYMBOL && Symbol[name] || (USE_SYMBOL ? Symbol : _uid)('Symbol.' + name));
+};
+
+$exports.store = store;
+});
+
+var def = _objectDp.f;
+
+var TAG = _wks('toStringTag');
+
+var _setToStringTag = function (it, tag, stat) {
+  if (it && !_has(it = stat ? it : it.prototype, TAG)) def(it, TAG, { configurable: true, value: tag });
+};
+
+var IteratorPrototype = {};
+
+// 25.1.2.1.1 %IteratorPrototype%[@@iterator]()
+_hide(IteratorPrototype, _wks('iterator'), function () { return this; });
+
+var _iterCreate = function (Constructor, NAME, next) {
+  Constructor.prototype = _objectCreate(IteratorPrototype, { next: _propertyDesc(1, next) });
+  _setToStringTag(Constructor, NAME + ' Iterator');
+};
+
+// 19.1.2.9 / 15.2.3.2 Object.getPrototypeOf(O)
+
+
+var IE_PROTO$2 = _sharedKey('IE_PROTO');
+var ObjectProto = Object.prototype;
+
+var _objectGpo = Object.getPrototypeOf || function (O) {
+  O = _toObject(O);
+  if (_has(O, IE_PROTO$2)) return O[IE_PROTO$2];
+  if (typeof O.constructor == 'function' && O instanceof O.constructor) {
+    return O.constructor.prototype;
+  } return O instanceof Object ? ObjectProto : null;
+};
+
+var ITERATOR = _wks('iterator');
+var BUGGY = !([].keys && 'next' in [].keys()); // Safari has buggy iterators w/o `next`
+var FF_ITERATOR = '@@iterator';
+var KEYS = 'keys';
+var VALUES = 'values';
+
+var returnThis = function () { return this; };
+
+var _iterDefine = function (Base, NAME, Constructor, next, DEFAULT, IS_SET, FORCED) {
+  _iterCreate(Constructor, NAME, next);
+  var getMethod = function (kind) {
+    if (!BUGGY && kind in proto) return proto[kind];
+    switch (kind) {
+      case KEYS: return function keys() { return new Constructor(this, kind); };
+      case VALUES: return function values() { return new Constructor(this, kind); };
+    } return function entries() { return new Constructor(this, kind); };
+  };
+  var TAG = NAME + ' Iterator';
+  var DEF_VALUES = DEFAULT == VALUES;
+  var VALUES_BUG = false;
+  var proto = Base.prototype;
+  var $native = proto[ITERATOR] || proto[FF_ITERATOR] || DEFAULT && proto[DEFAULT];
+  var $default = $native || getMethod(DEFAULT);
+  var $entries = DEFAULT ? !DEF_VALUES ? $default : getMethod('entries') : undefined;
+  var $anyNative = NAME == 'Array' ? proto.entries || $native : $native;
+  var methods, key, IteratorPrototype;
+  // Fix native
+  if ($anyNative) {
+    IteratorPrototype = _objectGpo($anyNative.call(new Base()));
+    if (IteratorPrototype !== Object.prototype && IteratorPrototype.next) {
+      // Set @@toStringTag to native iterators
+      _setToStringTag(IteratorPrototype, TAG, true);
+    }
+  }
+  // fix Array#{values, @@iterator}.name in V8 / FF
+  if (DEF_VALUES && $native && $native.name !== VALUES) {
+    VALUES_BUG = true;
+    $default = function values() { return $native.call(this); };
+  }
+  // Define iterator
+  if (( FORCED) && (BUGGY || VALUES_BUG || !proto[ITERATOR])) {
+    _hide(proto, ITERATOR, $default);
+  }
+  // Plug for library
+  _iterators[NAME] = $default;
+  _iterators[TAG] = returnThis;
+  if (DEFAULT) {
+    methods = {
+      values: DEF_VALUES ? $default : getMethod(VALUES),
+      keys: IS_SET ? $default : getMethod(KEYS),
+      entries: $entries
+    };
+    if (FORCED) for (key in methods) {
+      if (!(key in proto)) _redefine(proto, key, methods[key]);
+    } else _export(_export.P + _export.F * (BUGGY || VALUES_BUG), NAME, methods);
+  }
+  return methods;
+};
+
+var $at = _stringAt(true);
+
+// 21.1.3.27 String.prototype[@@iterator]()
+_iterDefine(String, 'String', function (iterated) {
+  this._t = String(iterated); // target
+  this._i = 0;                // next index
+// 21.1.5.2.1 %StringIteratorPrototype%.next()
+}, function () {
+  var O = this._t;
+  var index = this._i;
+  var point;
+  if (index >= O.length) return { value: undefined, done: true };
+  point = $at(O, index);
+  this._i += point.length;
+  return { value: point, done: false };
+});
+
+var _iterStep = function (done, value) {
+  return { value: value, done: !!done };
+};
+
+// 22.1.3.4 Array.prototype.entries()
+// 22.1.3.13 Array.prototype.keys()
+// 22.1.3.29 Array.prototype.values()
+// 22.1.3.30 Array.prototype[@@iterator]()
+var es6_array_iterator = _iterDefine(Array, 'Array', function (iterated, kind) {
+  this._t = _toIobject(iterated); // target
+  this._i = 0;                   // next index
+  this._k = kind;                // kind
+// 22.1.5.2.1 %ArrayIteratorPrototype%.next()
+}, function () {
+  var O = this._t;
+  var kind = this._k;
+  var index = this._i++;
+  if (!O || index >= O.length) {
+    this._t = undefined;
+    return _iterStep(1);
+  }
+  if (kind == 'keys') return _iterStep(0, index);
+  if (kind == 'values') return _iterStep(0, O[index]);
+  return _iterStep(0, [index, O[index]]);
+}, 'values');
+
+// argumentsList[@@iterator] is %ArrayProto_values% (9.4.4.6, 9.4.4.7)
+_iterators.Arguments = _iterators.Array;
+
+var TO_STRING_TAG = _wks('toStringTag');
+
+var DOMIterables = ('CSSRuleList,CSSStyleDeclaration,CSSValueList,ClientRectList,DOMRectList,DOMStringList,' +
+  'DOMTokenList,DataTransferItemList,FileList,HTMLAllCollection,HTMLCollection,HTMLFormElement,HTMLSelectElement,' +
+  'MediaList,MimeTypeArray,NamedNodeMap,NodeList,PaintRequestList,Plugin,PluginArray,SVGLengthList,SVGNumberList,' +
+  'SVGPathSegList,SVGPointList,SVGStringList,SVGTransformList,SourceBufferList,StyleSheetList,TextTrackCueList,' +
+  'TextTrackList,TouchList').split(',');
+
+for (var i = 0; i < DOMIterables.length; i++) {
+  var NAME = DOMIterables[i];
+  var Collection = _global[NAME];
+  var proto = Collection && Collection.prototype;
+  if (proto && !proto[TO_STRING_TAG]) _hide(proto, TO_STRING_TAG, NAME);
+  _iterators[NAME] = _iterators.Array;
+}
+
+var f$1 = _wks;
+
+var _wksExt = {
+	f: f$1
+};
+
+var iterator = _wksExt.f('iterator');
+
+var iterator$1 = iterator;
+
+var _meta = createCommonjsModule(function (module) {
+var META = _uid('meta');
+
+
+var setDesc = _objectDp.f;
+var id = 0;
+var isExtensible = Object.isExtensible || function () {
+  return true;
+};
+var FREEZE = !_fails(function () {
+  return isExtensible(Object.preventExtensions({}));
+});
+var setMeta = function (it) {
+  setDesc(it, META, { value: {
+    i: 'O' + ++id, // object ID
+    w: {}          // weak collections IDs
+  } });
+};
+var fastKey = function (it, create) {
+  // return primitive with prefix
+  if (!_isObject(it)) return typeof it == 'symbol' ? it : (typeof it == 'string' ? 'S' : 'P') + it;
+  if (!_has(it, META)) {
+    // can't set metadata to uncaught frozen object
+    if (!isExtensible(it)) return 'F';
+    // not necessary to add metadata
+    if (!create) return 'E';
+    // add missing metadata
+    setMeta(it);
+  // return object ID
+  } return it[META].i;
+};
+var getWeak = function (it, create) {
+  if (!_has(it, META)) {
+    // can't set metadata to uncaught frozen object
+    if (!isExtensible(it)) return true;
+    // not necessary to add metadata
+    if (!create) return false;
+    // add missing metadata
+    setMeta(it);
+  // return hash weak collections IDs
+  } return it[META].w;
+};
+// add metadata on freeze-family methods calling
+var onFreeze = function (it) {
+  if (FREEZE && meta.NEED && isExtensible(it) && !_has(it, META)) setMeta(it);
+  return it;
+};
+var meta = module.exports = {
+  KEY: META,
+  NEED: false,
+  fastKey: fastKey,
+  getWeak: getWeak,
+  onFreeze: onFreeze
+};
+});
+var _meta_1 = _meta.KEY;
+var _meta_2 = _meta.NEED;
+var _meta_3 = _meta.fastKey;
+var _meta_4 = _meta.getWeak;
+var _meta_5 = _meta.onFreeze;
+
+var defineProperty$2 = _objectDp.f;
+var _wksDefine = function (name) {
+  var $Symbol = _core.Symbol || (_core.Symbol =  {} );
+  if (name.charAt(0) != '_' && !(name in $Symbol)) defineProperty$2($Symbol, name, { value: _wksExt.f(name) });
+};
+
+var f$2 = Object.getOwnPropertySymbols;
+
+var _objectGops = {
+	f: f$2
+};
+
+var f$3 = {}.propertyIsEnumerable;
+
+var _objectPie = {
+	f: f$3
+};
+
+// all enumerable object keys, includes symbols
+
+
+
+var _enumKeys = function (it) {
+  var result = _objectKeys(it);
+  var getSymbols = _objectGops.f;
+  if (getSymbols) {
+    var symbols = getSymbols(it);
+    var isEnum = _objectPie.f;
+    var i = 0;
+    var key;
+    while (symbols.length > i) if (isEnum.call(it, key = symbols[i++])) result.push(key);
+  } return result;
+};
+
+// 7.2.2 IsArray(argument)
+
+var _isArray = Array.isArray || function isArray(arg) {
+  return _cof(arg) == 'Array';
+};
+
+// 19.1.2.7 / 15.2.3.4 Object.getOwnPropertyNames(O)
+
+var hiddenKeys = _enumBugKeys.concat('length', 'prototype');
+
+var f$4 = Object.getOwnPropertyNames || function getOwnPropertyNames(O) {
+  return _objectKeysInternal(O, hiddenKeys);
+};
+
+var _objectGopn = {
+	f: f$4
+};
+
+// fallback for IE11 buggy Object.getOwnPropertyNames with iframe and window
+
+var gOPN = _objectGopn.f;
+var toString$1 = {}.toString;
+
+var windowNames = typeof window == 'object' && window && Object.getOwnPropertyNames
+  ? Object.getOwnPropertyNames(window) : [];
+
+var getWindowNames = function (it) {
+  try {
+    return gOPN(it);
+  } catch (e) {
+    return windowNames.slice();
+  }
+};
+
+var f$5 = function getOwnPropertyNames(it) {
+  return windowNames && toString$1.call(it) == '[object Window]' ? getWindowNames(it) : gOPN(_toIobject(it));
+};
+
+var _objectGopnExt = {
+	f: f$5
+};
+
+var gOPD = Object.getOwnPropertyDescriptor;
+
+var f$6 = _descriptors ? gOPD : function getOwnPropertyDescriptor(O, P) {
+  O = _toIobject(O);
+  P = _toPrimitive(P, true);
+  if (_ie8DomDefine) try {
+    return gOPD(O, P);
+  } catch (e) { /* empty */ }
+  if (_has(O, P)) return _propertyDesc(!_objectPie.f.call(O, P), O[P]);
+};
+
+var _objectGopd = {
+	f: f$6
+};
+
+// ECMAScript 6 symbols shim
+
+
+
+
+
+var META = _meta.KEY;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var gOPD$1 = _objectGopd.f;
+var dP$1 = _objectDp.f;
+var gOPN$1 = _objectGopnExt.f;
+var $Symbol = _global.Symbol;
+var $JSON$1 = _global.JSON;
+var _stringify = $JSON$1 && $JSON$1.stringify;
+var PROTOTYPE$2 = 'prototype';
+var HIDDEN = _wks('_hidden');
+var TO_PRIMITIVE = _wks('toPrimitive');
+var isEnum = {}.propertyIsEnumerable;
+var SymbolRegistry = _shared('symbol-registry');
+var AllSymbols = _shared('symbols');
+var OPSymbols = _shared('op-symbols');
+var ObjectProto$1 = Object[PROTOTYPE$2];
+var USE_NATIVE = typeof $Symbol == 'function' && !!_objectGops.f;
+var QObject = _global.QObject;
+// Don't use setters in Qt Script, https://github.com/zloirock/core-js/issues/173
+var setter = !QObject || !QObject[PROTOTYPE$2] || !QObject[PROTOTYPE$2].findChild;
+
+// fallback for old Android, https://code.google.com/p/v8/issues/detail?id=687
+var setSymbolDesc = _descriptors && _fails(function () {
+  return _objectCreate(dP$1({}, 'a', {
+    get: function () { return dP$1(this, 'a', { value: 7 }).a; }
+  })).a != 7;
+}) ? function (it, key, D) {
+  var protoDesc = gOPD$1(ObjectProto$1, key);
+  if (protoDesc) delete ObjectProto$1[key];
+  dP$1(it, key, D);
+  if (protoDesc && it !== ObjectProto$1) dP$1(ObjectProto$1, key, protoDesc);
+} : dP$1;
+
+var wrap = function (tag) {
+  var sym = AllSymbols[tag] = _objectCreate($Symbol[PROTOTYPE$2]);
+  sym._k = tag;
+  return sym;
+};
+
+var isSymbol = USE_NATIVE && typeof $Symbol.iterator == 'symbol' ? function (it) {
+  return typeof it == 'symbol';
+} : function (it) {
+  return it instanceof $Symbol;
+};
+
+var $defineProperty = function defineProperty(it, key, D) {
+  if (it === ObjectProto$1) $defineProperty(OPSymbols, key, D);
+  _anObject(it);
+  key = _toPrimitive(key, true);
+  _anObject(D);
+  if (_has(AllSymbols, key)) {
+    if (!D.enumerable) {
+      if (!_has(it, HIDDEN)) dP$1(it, HIDDEN, _propertyDesc(1, {}));
+      it[HIDDEN][key] = true;
+    } else {
+      if (_has(it, HIDDEN) && it[HIDDEN][key]) it[HIDDEN][key] = false;
+      D = _objectCreate(D, { enumerable: _propertyDesc(0, false) });
+    } return setSymbolDesc(it, key, D);
+  } return dP$1(it, key, D);
+};
+var $defineProperties = function defineProperties(it, P) {
+  _anObject(it);
+  var keys = _enumKeys(P = _toIobject(P));
+  var i = 0;
+  var l = keys.length;
+  var key;
+  while (l > i) $defineProperty(it, key = keys[i++], P[key]);
+  return it;
+};
+var $create = function create(it, P) {
+  return P === undefined ? _objectCreate(it) : $defineProperties(_objectCreate(it), P);
+};
+var $propertyIsEnumerable = function propertyIsEnumerable(key) {
+  var E = isEnum.call(this, key = _toPrimitive(key, true));
+  if (this === ObjectProto$1 && _has(AllSymbols, key) && !_has(OPSymbols, key)) return false;
+  return E || !_has(this, key) || !_has(AllSymbols, key) || _has(this, HIDDEN) && this[HIDDEN][key] ? E : true;
+};
+var $getOwnPropertyDescriptor = function getOwnPropertyDescriptor(it, key) {
+  it = _toIobject(it);
+  key = _toPrimitive(key, true);
+  if (it === ObjectProto$1 && _has(AllSymbols, key) && !_has(OPSymbols, key)) return;
+  var D = gOPD$1(it, key);
+  if (D && _has(AllSymbols, key) && !(_has(it, HIDDEN) && it[HIDDEN][key])) D.enumerable = true;
+  return D;
+};
+var $getOwnPropertyNames = function getOwnPropertyNames(it) {
+  var names = gOPN$1(_toIobject(it));
+  var result = [];
+  var i = 0;
+  var key;
+  while (names.length > i) {
+    if (!_has(AllSymbols, key = names[i++]) && key != HIDDEN && key != META) result.push(key);
+  } return result;
+};
+var $getOwnPropertySymbols = function getOwnPropertySymbols(it) {
+  var IS_OP = it === ObjectProto$1;
+  var names = gOPN$1(IS_OP ? OPSymbols : _toIobject(it));
+  var result = [];
+  var i = 0;
+  var key;
+  while (names.length > i) {
+    if (_has(AllSymbols, key = names[i++]) && (IS_OP ? _has(ObjectProto$1, key) : true)) result.push(AllSymbols[key]);
+  } return result;
+};
+
+// 19.4.1.1 Symbol([description])
+if (!USE_NATIVE) {
+  $Symbol = function Symbol() {
+    if (this instanceof $Symbol) throw TypeError('Symbol is not a constructor!');
+    var tag = _uid(arguments.length > 0 ? arguments[0] : undefined);
+    var $set = function (value) {
+      if (this === ObjectProto$1) $set.call(OPSymbols, value);
+      if (_has(this, HIDDEN) && _has(this[HIDDEN], tag)) this[HIDDEN][tag] = false;
+      setSymbolDesc(this, tag, _propertyDesc(1, value));
+    };
+    if (_descriptors && setter) setSymbolDesc(ObjectProto$1, tag, { configurable: true, set: $set });
+    return wrap(tag);
+  };
+  _redefine($Symbol[PROTOTYPE$2], 'toString', function toString() {
+    return this._k;
+  });
+
+  _objectGopd.f = $getOwnPropertyDescriptor;
+  _objectDp.f = $defineProperty;
+  _objectGopn.f = _objectGopnExt.f = $getOwnPropertyNames;
+  _objectPie.f = $propertyIsEnumerable;
+  _objectGops.f = $getOwnPropertySymbols;
+
+  if (_descriptors && !_library) {
+    _redefine(ObjectProto$1, 'propertyIsEnumerable', $propertyIsEnumerable, true);
+  }
+
+  _wksExt.f = function (name) {
+    return wrap(_wks(name));
+  };
+}
+
+_export(_export.G + _export.W + _export.F * !USE_NATIVE, { Symbol: $Symbol });
+
+for (var es6Symbols = (
+  // 19.4.2.2, 19.4.2.3, 19.4.2.4, 19.4.2.6, 19.4.2.8, 19.4.2.9, 19.4.2.10, 19.4.2.11, 19.4.2.12, 19.4.2.13, 19.4.2.14
+  'hasInstance,isConcatSpreadable,iterator,match,replace,search,species,split,toPrimitive,toStringTag,unscopables'
+).split(','), j = 0; es6Symbols.length > j;)_wks(es6Symbols[j++]);
+
+for (var wellKnownSymbols = _objectKeys(_wks.store), k = 0; wellKnownSymbols.length > k;) _wksDefine(wellKnownSymbols[k++]);
+
+_export(_export.S + _export.F * !USE_NATIVE, 'Symbol', {
+  // 19.4.2.1 Symbol.for(key)
+  'for': function (key) {
+    return _has(SymbolRegistry, key += '')
+      ? SymbolRegistry[key]
+      : SymbolRegistry[key] = $Symbol(key);
+  },
+  // 19.4.2.5 Symbol.keyFor(sym)
+  keyFor: function keyFor(sym) {
+    if (!isSymbol(sym)) throw TypeError(sym + ' is not a symbol!');
+    for (var key in SymbolRegistry) if (SymbolRegistry[key] === sym) return key;
+  },
+  useSetter: function () { setter = true; },
+  useSimple: function () { setter = false; }
+});
+
+_export(_export.S + _export.F * !USE_NATIVE, 'Object', {
+  // 19.1.2.2 Object.create(O [, Properties])
+  create: $create,
+  // 19.1.2.4 Object.defineProperty(O, P, Attributes)
+  defineProperty: $defineProperty,
+  // 19.1.2.3 Object.defineProperties(O, Properties)
+  defineProperties: $defineProperties,
+  // 19.1.2.6 Object.getOwnPropertyDescriptor(O, P)
+  getOwnPropertyDescriptor: $getOwnPropertyDescriptor,
+  // 19.1.2.7 Object.getOwnPropertyNames(O)
+  getOwnPropertyNames: $getOwnPropertyNames,
+  // 19.1.2.8 Object.getOwnPropertySymbols(O)
+  getOwnPropertySymbols: $getOwnPropertySymbols
+});
+
+// Chrome 38 and 39 `Object.getOwnPropertySymbols` fails on primitives
+// https://bugs.chromium.org/p/v8/issues/detail?id=3443
+var FAILS_ON_PRIMITIVES = _fails(function () { _objectGops.f(1); });
+
+_export(_export.S + _export.F * FAILS_ON_PRIMITIVES, 'Object', {
+  getOwnPropertySymbols: function getOwnPropertySymbols(it) {
+    return _objectGops.f(_toObject(it));
+  }
+});
+
+// 24.3.2 JSON.stringify(value [, replacer [, space]])
+$JSON$1 && _export(_export.S + _export.F * (!USE_NATIVE || _fails(function () {
+  var S = $Symbol();
+  // MS Edge converts symbol values to JSON as {}
+  // WebKit converts symbol values to JSON as null
+  // V8 throws on boxed symbols
+  return _stringify([S]) != '[null]' || _stringify({ a: S }) != '{}' || _stringify(Object(S)) != '{}';
+})), 'JSON', {
+  stringify: function stringify(it) {
+    var args = [it];
+    var i = 1;
+    var replacer, $replacer;
+    while (arguments.length > i) args.push(arguments[i++]);
+    $replacer = replacer = args[1];
+    if (!_isObject(replacer) && it === undefined || isSymbol(it)) return; // IE8 returns string on undefined
+    if (!_isArray(replacer)) replacer = function (key, value) {
+      if (typeof $replacer == 'function') value = $replacer.call(this, key, value);
+      if (!isSymbol(value)) return value;
+    };
+    args[1] = replacer;
+    return _stringify.apply($JSON$1, args);
+  }
+});
+
+// 19.4.3.4 Symbol.prototype[@@toPrimitive](hint)
+$Symbol[PROTOTYPE$2][TO_PRIMITIVE] || _hide($Symbol[PROTOTYPE$2], TO_PRIMITIVE, $Symbol[PROTOTYPE$2].valueOf);
+// 19.4.3.5 Symbol.prototype[@@toStringTag]
+_setToStringTag($Symbol, 'Symbol');
+// 20.2.1.9 Math[@@toStringTag]
+_setToStringTag(Math, 'Math', true);
+// 24.3.3 JSON[@@toStringTag]
+_setToStringTag(_global.JSON, 'JSON', true);
+
+_wksDefine('asyncIterator');
+
+_wksDefine('observable');
+
+var symbol = _core.Symbol;
+
+var symbol$1 = symbol;
+
+var _typeof_1 = createCommonjsModule(function (module) {
+function _typeof2(obj) { if (typeof symbol$1 === "function" && typeof iterator$1 === "symbol") { _typeof2 = function _typeof2(obj) { return typeof obj; }; } else { _typeof2 = function _typeof2(obj) { return obj && typeof symbol$1 === "function" && obj.constructor === symbol$1 && obj !== symbol$1.prototype ? "symbol" : typeof obj; }; } return _typeof2(obj); }
+
+function _typeof(obj) {
+  if (typeof symbol$1 === "function" && _typeof2(iterator$1) === "symbol") {
+    module.exports = _typeof = function _typeof(obj) {
+      return _typeof2(obj);
+    };
+  } else {
+    module.exports = _typeof = function _typeof(obj) {
+      return obj && typeof symbol$1 === "function" && obj.constructor === symbol$1 && obj !== symbol$1.prototype ? "symbol" : _typeof2(obj);
+    };
+  }
+
+  return _typeof(obj);
+}
+
+module.exports = _typeof;
+});
+
+function _assertThisInitialized(self) {
+  if (self === void 0) {
+    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+  }
+
+  return self;
+}
+
+var assertThisInitialized = _assertThisInitialized;
+
+function _possibleConstructorReturn(self, call) {
+  if (call && (_typeof_1(call) === "object" || typeof call === "function")) {
+    return call;
+  }
+
+  return assertThisInitialized(self);
+}
+
+var possibleConstructorReturn = _possibleConstructorReturn;
+
+// 19.1.2.9 Object.getPrototypeOf(O)
+
+
+
+_objectSap('getPrototypeOf', function () {
+  return function getPrototypeOf(it) {
+    return _objectGpo(_toObject(it));
+  };
+});
+
+var getPrototypeOf = _core.Object.getPrototypeOf;
+
+var getPrototypeOf$1 = getPrototypeOf;
+
+// Works with __proto__ only. Old v8 can't work with null proto objects.
+/* eslint-disable no-proto */
+
+
+var check = function (O, proto) {
+  _anObject(O);
+  if (!_isObject(proto) && proto !== null) throw TypeError(proto + ": can't set as prototype!");
+};
+var _setProto = {
+  set: Object.setPrototypeOf || ('__proto__' in {} ? // eslint-disable-line
+    function (test, buggy, set) {
+      try {
+        set = _ctx(Function.call, _objectGopd.f(Object.prototype, '__proto__').set, 2);
+        set(test, []);
+        buggy = !(test instanceof Array);
+      } catch (e) { buggy = true; }
+      return function setPrototypeOf(O, proto) {
+        check(O, proto);
+        if (buggy) O.__proto__ = proto;
+        else set(O, proto);
+        return O;
+      };
+    }({}, false) : undefined),
+  check: check
+};
+
+// 19.1.3.19 Object.setPrototypeOf(O, proto)
+
+_export(_export.S, 'Object', { setPrototypeOf: _setProto.set });
+
+var setPrototypeOf = _core.Object.setPrototypeOf;
+
+var setPrototypeOf$1 = setPrototypeOf;
+
+var getPrototypeOf$2 = createCommonjsModule(function (module) {
+function _getPrototypeOf(o) {
+  module.exports = _getPrototypeOf = setPrototypeOf$1 ? getPrototypeOf$1 : function _getPrototypeOf(o) {
+    return o.__proto__ || getPrototypeOf$1(o);
+  };
+  return _getPrototypeOf(o);
+}
+
+module.exports = _getPrototypeOf;
+});
+
+// 19.1.2.2 / 15.2.3.5 Object.create(O [, Properties])
+_export(_export.S, 'Object', { create: _objectCreate });
+
+var $Object$1 = _core.Object;
+var create = function create(P, D) {
+  return $Object$1.create(P, D);
+};
+
+var create$1 = create;
+
+var setPrototypeOf$2 = createCommonjsModule(function (module) {
+function _setPrototypeOf(o, p) {
+  module.exports = _setPrototypeOf = setPrototypeOf$1 || function _setPrototypeOf(o, p) {
+    o.__proto__ = p;
+    return o;
+  };
+
+  return _setPrototypeOf(o, p);
+}
+
+module.exports = _setPrototypeOf;
+});
+
+function _inherits(subClass, superClass) {
+  if (typeof superClass !== "function" && superClass !== null) {
+    throw new TypeError("Super expression must either be null or a function");
+  }
+
+  subClass.prototype = create$1(superClass && superClass.prototype, {
+    constructor: {
+      value: subClass,
+      writable: true,
+      configurable: true
+    }
+  });
+  if (superClass) setPrototypeOf$2(subClass, superClass);
+}
+
+var inherits = _inherits;
 
 /**
  * Removes all key-value entries from the list cache.
@@ -1287,7 +2085,7 @@ Stack.prototype.set = _stackSet;
 
 var _Stack = Stack;
 
-var defineProperty$2 = (function() {
+var defineProperty$3 = (function() {
   try {
     var func = _getNative(Object, 'defineProperty');
     func({}, '', {});
@@ -1295,7 +2093,7 @@ var defineProperty$2 = (function() {
   } catch (e) {}
 }());
 
-var _defineProperty = defineProperty$2;
+var _defineProperty = defineProperty$3;
 
 /**
  * The base implementation of `assignValue` and `assignMergeValue` without
@@ -2738,248 +3536,6 @@ var _parseInt$1 = _core.parseInt;
 
 var _parseInt$2 = _parseInt$1;
 
-// true  -> String#at
-// false -> String#codePointAt
-var _stringAt = function (TO_STRING) {
-  return function (that, pos) {
-    var s = String(_defined(that));
-    var i = _toInteger(pos);
-    var l = s.length;
-    var a, b;
-    if (i < 0 || i >= l) return TO_STRING ? '' : undefined;
-    a = s.charCodeAt(i);
-    return a < 0xd800 || a > 0xdbff || i + 1 === l || (b = s.charCodeAt(i + 1)) < 0xdc00 || b > 0xdfff
-      ? TO_STRING ? s.charAt(i) : a
-      : TO_STRING ? s.slice(i, i + 2) : (a - 0xd800 << 10) + (b - 0xdc00) + 0x10000;
-  };
-};
-
-var _redefine = _hide;
-
-var _iterators = {};
-
-var _objectDps = _descriptors ? Object.defineProperties : function defineProperties(O, Properties) {
-  _anObject(O);
-  var keys = _objectKeys(Properties);
-  var length = keys.length;
-  var i = 0;
-  var P;
-  while (length > i) _objectDp.f(O, P = keys[i++], Properties[P]);
-  return O;
-};
-
-var document$2 = _global.document;
-var _html = document$2 && document$2.documentElement;
-
-// 19.1.2.2 / 15.2.3.5 Object.create(O [, Properties])
-
-
-
-var IE_PROTO$1 = _sharedKey('IE_PROTO');
-var Empty = function () { /* empty */ };
-var PROTOTYPE$1 = 'prototype';
-
-// Create object with fake `null` prototype: use iframe Object with cleared prototype
-var createDict = function () {
-  // Thrash, waste and sodomy: IE GC bug
-  var iframe = _domCreate('iframe');
-  var i = _enumBugKeys.length;
-  var lt = '<';
-  var gt = '>';
-  var iframeDocument;
-  iframe.style.display = 'none';
-  _html.appendChild(iframe);
-  iframe.src = 'javascript:'; // eslint-disable-line no-script-url
-  // createDict = iframe.contentWindow.Object;
-  // html.removeChild(iframe);
-  iframeDocument = iframe.contentWindow.document;
-  iframeDocument.open();
-  iframeDocument.write(lt + 'script' + gt + 'document.F=Object' + lt + '/script' + gt);
-  iframeDocument.close();
-  createDict = iframeDocument.F;
-  while (i--) delete createDict[PROTOTYPE$1][_enumBugKeys[i]];
-  return createDict();
-};
-
-var _objectCreate = Object.create || function create(O, Properties) {
-  var result;
-  if (O !== null) {
-    Empty[PROTOTYPE$1] = _anObject(O);
-    result = new Empty();
-    Empty[PROTOTYPE$1] = null;
-    // add "__proto__" for Object.getPrototypeOf polyfill
-    result[IE_PROTO$1] = O;
-  } else result = createDict();
-  return Properties === undefined ? result : _objectDps(result, Properties);
-};
-
-var _wks = createCommonjsModule(function (module) {
-var store = _shared('wks');
-
-var Symbol = _global.Symbol;
-var USE_SYMBOL = typeof Symbol == 'function';
-
-var $exports = module.exports = function (name) {
-  return store[name] || (store[name] =
-    USE_SYMBOL && Symbol[name] || (USE_SYMBOL ? Symbol : _uid)('Symbol.' + name));
-};
-
-$exports.store = store;
-});
-
-var def = _objectDp.f;
-
-var TAG = _wks('toStringTag');
-
-var _setToStringTag = function (it, tag, stat) {
-  if (it && !_has(it = stat ? it : it.prototype, TAG)) def(it, TAG, { configurable: true, value: tag });
-};
-
-var IteratorPrototype = {};
-
-// 25.1.2.1.1 %IteratorPrototype%[@@iterator]()
-_hide(IteratorPrototype, _wks('iterator'), function () { return this; });
-
-var _iterCreate = function (Constructor, NAME, next) {
-  Constructor.prototype = _objectCreate(IteratorPrototype, { next: _propertyDesc(1, next) });
-  _setToStringTag(Constructor, NAME + ' Iterator');
-};
-
-// 19.1.2.9 / 15.2.3.2 Object.getPrototypeOf(O)
-
-
-var IE_PROTO$2 = _sharedKey('IE_PROTO');
-var ObjectProto = Object.prototype;
-
-var _objectGpo = Object.getPrototypeOf || function (O) {
-  O = _toObject(O);
-  if (_has(O, IE_PROTO$2)) return O[IE_PROTO$2];
-  if (typeof O.constructor == 'function' && O instanceof O.constructor) {
-    return O.constructor.prototype;
-  } return O instanceof Object ? ObjectProto : null;
-};
-
-var ITERATOR = _wks('iterator');
-var BUGGY = !([].keys && 'next' in [].keys()); // Safari has buggy iterators w/o `next`
-var FF_ITERATOR = '@@iterator';
-var KEYS = 'keys';
-var VALUES = 'values';
-
-var returnThis = function () { return this; };
-
-var _iterDefine = function (Base, NAME, Constructor, next, DEFAULT, IS_SET, FORCED) {
-  _iterCreate(Constructor, NAME, next);
-  var getMethod = function (kind) {
-    if (!BUGGY && kind in proto) return proto[kind];
-    switch (kind) {
-      case KEYS: return function keys() { return new Constructor(this, kind); };
-      case VALUES: return function values() { return new Constructor(this, kind); };
-    } return function entries() { return new Constructor(this, kind); };
-  };
-  var TAG = NAME + ' Iterator';
-  var DEF_VALUES = DEFAULT == VALUES;
-  var VALUES_BUG = false;
-  var proto = Base.prototype;
-  var $native = proto[ITERATOR] || proto[FF_ITERATOR] || DEFAULT && proto[DEFAULT];
-  var $default = $native || getMethod(DEFAULT);
-  var $entries = DEFAULT ? !DEF_VALUES ? $default : getMethod('entries') : undefined;
-  var $anyNative = NAME == 'Array' ? proto.entries || $native : $native;
-  var methods, key, IteratorPrototype;
-  // Fix native
-  if ($anyNative) {
-    IteratorPrototype = _objectGpo($anyNative.call(new Base()));
-    if (IteratorPrototype !== Object.prototype && IteratorPrototype.next) {
-      // Set @@toStringTag to native iterators
-      _setToStringTag(IteratorPrototype, TAG, true);
-    }
-  }
-  // fix Array#{values, @@iterator}.name in V8 / FF
-  if (DEF_VALUES && $native && $native.name !== VALUES) {
-    VALUES_BUG = true;
-    $default = function values() { return $native.call(this); };
-  }
-  // Define iterator
-  if (( FORCED) && (BUGGY || VALUES_BUG || !proto[ITERATOR])) {
-    _hide(proto, ITERATOR, $default);
-  }
-  // Plug for library
-  _iterators[NAME] = $default;
-  _iterators[TAG] = returnThis;
-  if (DEFAULT) {
-    methods = {
-      values: DEF_VALUES ? $default : getMethod(VALUES),
-      keys: IS_SET ? $default : getMethod(KEYS),
-      entries: $entries
-    };
-    if (FORCED) for (key in methods) {
-      if (!(key in proto)) _redefine(proto, key, methods[key]);
-    } else _export(_export.P + _export.F * (BUGGY || VALUES_BUG), NAME, methods);
-  }
-  return methods;
-};
-
-var $at = _stringAt(true);
-
-// 21.1.3.27 String.prototype[@@iterator]()
-_iterDefine(String, 'String', function (iterated) {
-  this._t = String(iterated); // target
-  this._i = 0;                // next index
-// 21.1.5.2.1 %StringIteratorPrototype%.next()
-}, function () {
-  var O = this._t;
-  var index = this._i;
-  var point;
-  if (index >= O.length) return { value: undefined, done: true };
-  point = $at(O, index);
-  this._i += point.length;
-  return { value: point, done: false };
-});
-
-var _iterStep = function (done, value) {
-  return { value: value, done: !!done };
-};
-
-// 22.1.3.4 Array.prototype.entries()
-// 22.1.3.13 Array.prototype.keys()
-// 22.1.3.29 Array.prototype.values()
-// 22.1.3.30 Array.prototype[@@iterator]()
-var es6_array_iterator = _iterDefine(Array, 'Array', function (iterated, kind) {
-  this._t = _toIobject(iterated); // target
-  this._i = 0;                   // next index
-  this._k = kind;                // kind
-// 22.1.5.2.1 %ArrayIteratorPrototype%.next()
-}, function () {
-  var O = this._t;
-  var kind = this._k;
-  var index = this._i++;
-  if (!O || index >= O.length) {
-    this._t = undefined;
-    return _iterStep(1);
-  }
-  if (kind == 'keys') return _iterStep(0, index);
-  if (kind == 'values') return _iterStep(0, O[index]);
-  return _iterStep(0, [index, O[index]]);
-}, 'values');
-
-// argumentsList[@@iterator] is %ArrayProto_values% (9.4.4.6, 9.4.4.7)
-_iterators.Arguments = _iterators.Array;
-
-var TO_STRING_TAG = _wks('toStringTag');
-
-var DOMIterables = ('CSSRuleList,CSSStyleDeclaration,CSSValueList,ClientRectList,DOMRectList,DOMStringList,' +
-  'DOMTokenList,DataTransferItemList,FileList,HTMLAllCollection,HTMLCollection,HTMLFormElement,HTMLSelectElement,' +
-  'MediaList,MimeTypeArray,NamedNodeMap,NodeList,PaintRequestList,Plugin,PluginArray,SVGLengthList,SVGNumberList,' +
-  'SVGPathSegList,SVGPointList,SVGStringList,SVGTransformList,SourceBufferList,StyleSheetList,TextTrackCueList,' +
-  'TextTrackList,TouchList').split(',');
-
-for (var i = 0; i < DOMIterables.length; i++) {
-  var NAME = DOMIterables[i];
-  var Collection = _global[NAME];
-  var proto = Collection && Collection.prototype;
-  if (proto && !proto[TO_STRING_TAG]) _hide(proto, TO_STRING_TAG, NAME);
-  _iterators[NAME] = _iterators.Array;
-}
-
 // getting tag from 19.1.3.6 Object.prototype.toString()
 
 var TAG$1 = _wks('toStringTag');
@@ -3252,12 +3808,12 @@ function PromiseCapability(C) {
   this.reject = _aFunction(reject);
 }
 
-var f$1 = function (C) {
+var f$7 = function (C) {
   return new PromiseCapability(C);
 };
 
 var _newPromiseCapability = {
-	f: f$1
+	f: f$7
 };
 
 var _perform = function (exec) {
@@ -3338,7 +3894,7 @@ var empty = function () { /* empty */ };
 var Internal, newGenericPromiseCapability, OwnPromiseCapability, Wrapper;
 var newPromiseCapability = newGenericPromiseCapability = _newPromiseCapability.f;
 
-var USE_NATIVE = !!function () {
+var USE_NATIVE$1 = !!function () {
   try {
     // correct subclassing with @@species support
     var promise = $Promise.resolve(1);
@@ -3479,7 +4035,7 @@ var $resolve = function (value) {
 };
 
 // constructor polyfill
-if (!USE_NATIVE) {
+if (!USE_NATIVE$1) {
   // 25.4.3.1 Promise(executor)
   $Promise = function Promise(executor) {
     _anInstance(this, $Promise, PROMISE, '_h');
@@ -3531,13 +4087,13 @@ if (!USE_NATIVE) {
   };
 }
 
-_export(_export.G + _export.W + _export.F * !USE_NATIVE, { Promise: $Promise });
+_export(_export.G + _export.W + _export.F * !USE_NATIVE$1, { Promise: $Promise });
 _setToStringTag($Promise, PROMISE);
 _setSpecies(PROMISE);
 Wrapper = _core[PROMISE];
 
 // statics
-_export(_export.S + _export.F * !USE_NATIVE, PROMISE, {
+_export(_export.S + _export.F * !USE_NATIVE$1, PROMISE, {
   // 25.4.4.5 Promise.reject(r)
   reject: function reject(r) {
     var capability = newPromiseCapability(this);
@@ -3552,7 +4108,7 @@ _export(_export.S + _export.F * (_library ), PROMISE, {
     return _promiseResolve( this === Wrapper ? $Promise : this, x);
   }
 });
-_export(_export.S + _export.F * !(USE_NATIVE && _iterDetect(function (iter) {
+_export(_export.S + _export.F * !(USE_NATIVE$1 && _iterDetect(function (iter) {
   $Promise.all(iter)['catch'](empty);
 })), PROMISE, {
   // 25.4.4.1 Promise.all(iterable)
@@ -3625,12 +4181,6 @@ _export(_export.S, 'Promise', { 'try': function (callbackfn) {
 var promise = _core.Promise;
 
 var promise$1 = promise;
-
-// 7.2.2 IsArray(argument)
-
-var _isArray = Array.isArray || function isArray(arg) {
-  return _cof(arg) == 'Array';
-};
 
 // 22.1.2.2 / 15.4.3.2 Array.isArray(arg)
 
@@ -3762,67 +4312,6 @@ var assign_1 = assign;
 
 function jsonSchema2api(){var newData=0<arguments.length&&arguments[0]!==void 0?arguments[0]:{},data=1<arguments.length&&arguments[1]!==void 0?arguments[1]:{},schema=2<arguments.length?arguments[2]:void 0;if(!schema)throw new Error("arguments[2](schema) is not defined!");if(!data||isArray$2(data)&&!data.length)return data;var fn={object:function object(){objectTransform(newData,data,schema);},array:function array(){arrayTransform(newData,data,schema);}}[schemaType(getType(data))];"function"==typeof fn&&fn();}function objectTransform(newData,data,schema){var dataKeys=keys$1(data),properties=schema.properties,schemaKeys=keys$1(properties);return 0>=dataKeys.length?newData:-1<schemaKeys.indexOf("any")?dataKeys.forEach(function(schemaKey){var serverName=schemaKey,dataVal=data[serverName],dataType=schemaType(getType(dataVal));if("object"===dataType||"array"===dataType){if(!properties.any.properties&&!properties.any.items)throw new Error("object array has not sub");return newData[schemaKey]={},"array"===dataType&&(newData[schemaKey]=[]),jsonSchema2api(newData[schemaKey],dataVal,properties.any)}-1<dataKeys.indexOf(serverName)&&(newData[schemaKey]=dataVal);}):void schemaKeys.forEach(function(schemaKey){var serverName=properties[schemaKey].serverName,dataVal=data[serverName],dataType=schemaType(getType(dataVal));if(null===dataVal)return newData[schemaKey]=dataVal,!0;if(properties[schemaKey].type!==dataType)throw new Error("server data [".concat(serverName,"] type not equal jsonSchema [").concat(schemaKey,"] type"));if("object"===dataType||"array"===dataType){if(!properties[schemaKey].properties&&!properties[schemaKey].items)throw new Error("object array has not sub");return newData[schemaKey]={},"array"===dataType&&(newData[schemaKey]=[]),jsonSchema2api(newData[schemaKey],dataVal,properties[schemaKey])}-1<dataKeys.indexOf(serverName)&&(newData[schemaKey]=dataVal);})}function arrayTransform(newData,data,schema){var subSchema=schema.items,schemaDType=subSchema.type;data.forEach(function(item,i){var serverItemType=schemaType(getType(item));if(newData[i]||("array"===serverItemType&&(newData[i]=[]),"object"===serverItemType&&(newData[i]={})),null===item)return newData[i]=item,!0;if("none"===serverItemType)throw new Error("api key type error");if(schemaDType!==serverItemType)throw new Error("api key type not match schema key type");return "object"===serverItemType||"array"===serverItemType?jsonSchema2api(newData[i],item,subSchema):void("other"===schemaDType&&(newData[i]=item))});}function schemaType(type){var getType={object:"object",array:"array",other:"other"}[type];return getType||(getType=function(type){return !!(-1<["number","string","boolean"].indexOf(type))&&"other"}(type)),getType||"none"}function getType(val){return Object.prototype.toString.call(val).slice(8,-1).toLowerCase()}
 
-var _meta = createCommonjsModule(function (module) {
-var META = _uid('meta');
-
-
-var setDesc = _objectDp.f;
-var id = 0;
-var isExtensible = Object.isExtensible || function () {
-  return true;
-};
-var FREEZE = !_fails(function () {
-  return isExtensible(Object.preventExtensions({}));
-});
-var setMeta = function (it) {
-  setDesc(it, META, { value: {
-    i: 'O' + ++id, // object ID
-    w: {}          // weak collections IDs
-  } });
-};
-var fastKey = function (it, create) {
-  // return primitive with prefix
-  if (!_isObject(it)) return typeof it == 'symbol' ? it : (typeof it == 'string' ? 'S' : 'P') + it;
-  if (!_has(it, META)) {
-    // can't set metadata to uncaught frozen object
-    if (!isExtensible(it)) return 'F';
-    // not necessary to add metadata
-    if (!create) return 'E';
-    // add missing metadata
-    setMeta(it);
-  // return object ID
-  } return it[META].i;
-};
-var getWeak = function (it, create) {
-  if (!_has(it, META)) {
-    // can't set metadata to uncaught frozen object
-    if (!isExtensible(it)) return true;
-    // not necessary to add metadata
-    if (!create) return false;
-    // add missing metadata
-    setMeta(it);
-  // return hash weak collections IDs
-  } return it[META].w;
-};
-// add metadata on freeze-family methods calling
-var onFreeze = function (it) {
-  if (FREEZE && meta.NEED && isExtensible(it) && !_has(it, META)) setMeta(it);
-  return it;
-};
-var meta = module.exports = {
-  KEY: META,
-  NEED: false,
-  fastKey: fastKey,
-  getWeak: getWeak,
-  onFreeze: onFreeze
-};
-});
-var _meta_1 = _meta.KEY;
-var _meta_2 = _meta.NEED;
-var _meta_3 = _meta.fastKey;
-var _meta_4 = _meta.getWeak;
-var _meta_5 = _meta.onFreeze;
-
 // 19.1.2.17 Object.seal(O)
 
 var meta = _meta.onFreeze;
@@ -3837,463 +4326,42 @@ var seal = _core.Object.seal;
 
 var seal$1 = seal;
 
-// 19.1.2.9 Object.getPrototypeOf(O)
-
-
-
-_objectSap('getPrototypeOf', function () {
-  return function getPrototypeOf(it) {
-    return _objectGpo(_toObject(it));
-  };
-});
-
-var getPrototypeOf = _core.Object.getPrototypeOf;
-
-var getPrototypeOf$1 = getPrototypeOf;
-
-var f$2 = {}.propertyIsEnumerable;
-
-var _objectPie = {
-	f: f$2
-};
-
-var gOPD = Object.getOwnPropertyDescriptor;
-
-var f$3 = _descriptors ? gOPD : function getOwnPropertyDescriptor(O, P) {
-  O = _toIobject(O);
-  P = _toPrimitive(P, true);
-  if (_ie8DomDefine) try {
-    return gOPD(O, P);
-  } catch (e) { /* empty */ }
-  if (_has(O, P)) return _propertyDesc(!_objectPie.f.call(O, P), O[P]);
-};
-
-var _objectGopd = {
-	f: f$3
-};
-
-// Works with __proto__ only. Old v8 can't work with null proto objects.
-/* eslint-disable no-proto */
-
-
-var check = function (O, proto) {
-  _anObject(O);
-  if (!_isObject(proto) && proto !== null) throw TypeError(proto + ": can't set as prototype!");
-};
-var _setProto = {
-  set: Object.setPrototypeOf || ('__proto__' in {} ? // eslint-disable-line
-    function (test, buggy, set) {
-      try {
-        set = _ctx(Function.call, _objectGopd.f(Object.prototype, '__proto__').set, 2);
-        set(test, []);
-        buggy = !(test instanceof Array);
-      } catch (e) { buggy = true; }
-      return function setPrototypeOf(O, proto) {
-        check(O, proto);
-        if (buggy) O.__proto__ = proto;
-        else set(O, proto);
-        return O;
-      };
-    }({}, false) : undefined),
-  check: check
-};
-
-// 19.1.3.19 Object.setPrototypeOf(O, proto)
-
-_export(_export.S, 'Object', { setPrototypeOf: _setProto.set });
-
-var setPrototypeOf = _core.Object.setPrototypeOf;
-
-var setPrototypeOf$1 = setPrototypeOf;
-
 // 19.1.2.6 Object.getOwnPropertyDescriptor(O, P)
 
-var $getOwnPropertyDescriptor = _objectGopd.f;
+var $getOwnPropertyDescriptor$1 = _objectGopd.f;
 
 _objectSap('getOwnPropertyDescriptor', function () {
   return function getOwnPropertyDescriptor(it, key) {
-    return $getOwnPropertyDescriptor(_toIobject(it), key);
+    return $getOwnPropertyDescriptor$1(_toIobject(it), key);
   };
 });
 
-var $Object$1 = _core.Object;
+var $Object$2 = _core.Object;
 var getOwnPropertyDescriptor = function getOwnPropertyDescriptor(it, key) {
-  return $Object$1.getOwnPropertyDescriptor(it, key);
+  return $Object$2.getOwnPropertyDescriptor(it, key);
 };
 
 var getOwnPropertyDescriptor$1 = getOwnPropertyDescriptor;
-
-// 19.1.2.7 / 15.2.3.4 Object.getOwnPropertyNames(O)
-
-var hiddenKeys = _enumBugKeys.concat('length', 'prototype');
-
-var f$4 = Object.getOwnPropertyNames || function getOwnPropertyNames(O) {
-  return _objectKeysInternal(O, hiddenKeys);
-};
-
-var _objectGopn = {
-	f: f$4
-};
-
-// fallback for IE11 buggy Object.getOwnPropertyNames with iframe and window
-
-var gOPN = _objectGopn.f;
-var toString$1 = {}.toString;
-
-var windowNames = typeof window == 'object' && window && Object.getOwnPropertyNames
-  ? Object.getOwnPropertyNames(window) : [];
-
-var getWindowNames = function (it) {
-  try {
-    return gOPN(it);
-  } catch (e) {
-    return windowNames.slice();
-  }
-};
-
-var f$5 = function getOwnPropertyNames(it) {
-  return windowNames && toString$1.call(it) == '[object Window]' ? getWindowNames(it) : gOPN(_toIobject(it));
-};
-
-var _objectGopnExt = {
-	f: f$5
-};
 
 // 19.1.2.7 Object.getOwnPropertyNames(O)
 _objectSap('getOwnPropertyNames', function () {
   return _objectGopnExt.f;
 });
 
-var $Object$2 = _core.Object;
+var $Object$3 = _core.Object;
 var getOwnPropertyNames = function getOwnPropertyNames(it) {
-  return $Object$2.getOwnPropertyNames(it);
+  return $Object$3.getOwnPropertyNames(it);
 };
 
 var getOwnPropertyNames$1 = getOwnPropertyNames;
-
-var f$6 = _wks;
-
-var _wksExt = {
-	f: f$6
-};
-
-var iterator = _wksExt.f('iterator');
-
-var iterator$1 = iterator;
-
-var defineProperty$3 = _objectDp.f;
-var _wksDefine = function (name) {
-  var $Symbol = _core.Symbol || (_core.Symbol =  {} );
-  if (name.charAt(0) != '_' && !(name in $Symbol)) defineProperty$3($Symbol, name, { value: _wksExt.f(name) });
-};
-
-var f$7 = Object.getOwnPropertySymbols;
-
-var _objectGops = {
-	f: f$7
-};
-
-// all enumerable object keys, includes symbols
-
-
-
-var _enumKeys = function (it) {
-  var result = _objectKeys(it);
-  var getSymbols = _objectGops.f;
-  if (getSymbols) {
-    var symbols = getSymbols(it);
-    var isEnum = _objectPie.f;
-    var i = 0;
-    var key;
-    while (symbols.length > i) if (isEnum.call(it, key = symbols[i++])) result.push(key);
-  } return result;
-};
-
-// ECMAScript 6 symbols shim
-
-
-
-
-
-var META = _meta.KEY;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-var gOPD$1 = _objectGopd.f;
-var dP$1 = _objectDp.f;
-var gOPN$1 = _objectGopnExt.f;
-var $Symbol = _global.Symbol;
-var $JSON$1 = _global.JSON;
-var _stringify = $JSON$1 && $JSON$1.stringify;
-var PROTOTYPE$2 = 'prototype';
-var HIDDEN = _wks('_hidden');
-var TO_PRIMITIVE = _wks('toPrimitive');
-var isEnum = {}.propertyIsEnumerable;
-var SymbolRegistry = _shared('symbol-registry');
-var AllSymbols = _shared('symbols');
-var OPSymbols = _shared('op-symbols');
-var ObjectProto$1 = Object[PROTOTYPE$2];
-var USE_NATIVE$1 = typeof $Symbol == 'function' && !!_objectGops.f;
-var QObject = _global.QObject;
-// Don't use setters in Qt Script, https://github.com/zloirock/core-js/issues/173
-var setter = !QObject || !QObject[PROTOTYPE$2] || !QObject[PROTOTYPE$2].findChild;
-
-// fallback for old Android, https://code.google.com/p/v8/issues/detail?id=687
-var setSymbolDesc = _descriptors && _fails(function () {
-  return _objectCreate(dP$1({}, 'a', {
-    get: function () { return dP$1(this, 'a', { value: 7 }).a; }
-  })).a != 7;
-}) ? function (it, key, D) {
-  var protoDesc = gOPD$1(ObjectProto$1, key);
-  if (protoDesc) delete ObjectProto$1[key];
-  dP$1(it, key, D);
-  if (protoDesc && it !== ObjectProto$1) dP$1(ObjectProto$1, key, protoDesc);
-} : dP$1;
-
-var wrap = function (tag) {
-  var sym = AllSymbols[tag] = _objectCreate($Symbol[PROTOTYPE$2]);
-  sym._k = tag;
-  return sym;
-};
-
-var isSymbol = USE_NATIVE$1 && typeof $Symbol.iterator == 'symbol' ? function (it) {
-  return typeof it == 'symbol';
-} : function (it) {
-  return it instanceof $Symbol;
-};
-
-var $defineProperty = function defineProperty(it, key, D) {
-  if (it === ObjectProto$1) $defineProperty(OPSymbols, key, D);
-  _anObject(it);
-  key = _toPrimitive(key, true);
-  _anObject(D);
-  if (_has(AllSymbols, key)) {
-    if (!D.enumerable) {
-      if (!_has(it, HIDDEN)) dP$1(it, HIDDEN, _propertyDesc(1, {}));
-      it[HIDDEN][key] = true;
-    } else {
-      if (_has(it, HIDDEN) && it[HIDDEN][key]) it[HIDDEN][key] = false;
-      D = _objectCreate(D, { enumerable: _propertyDesc(0, false) });
-    } return setSymbolDesc(it, key, D);
-  } return dP$1(it, key, D);
-};
-var $defineProperties = function defineProperties(it, P) {
-  _anObject(it);
-  var keys = _enumKeys(P = _toIobject(P));
-  var i = 0;
-  var l = keys.length;
-  var key;
-  while (l > i) $defineProperty(it, key = keys[i++], P[key]);
-  return it;
-};
-var $create = function create(it, P) {
-  return P === undefined ? _objectCreate(it) : $defineProperties(_objectCreate(it), P);
-};
-var $propertyIsEnumerable = function propertyIsEnumerable(key) {
-  var E = isEnum.call(this, key = _toPrimitive(key, true));
-  if (this === ObjectProto$1 && _has(AllSymbols, key) && !_has(OPSymbols, key)) return false;
-  return E || !_has(this, key) || !_has(AllSymbols, key) || _has(this, HIDDEN) && this[HIDDEN][key] ? E : true;
-};
-var $getOwnPropertyDescriptor$1 = function getOwnPropertyDescriptor(it, key) {
-  it = _toIobject(it);
-  key = _toPrimitive(key, true);
-  if (it === ObjectProto$1 && _has(AllSymbols, key) && !_has(OPSymbols, key)) return;
-  var D = gOPD$1(it, key);
-  if (D && _has(AllSymbols, key) && !(_has(it, HIDDEN) && it[HIDDEN][key])) D.enumerable = true;
-  return D;
-};
-var $getOwnPropertyNames = function getOwnPropertyNames(it) {
-  var names = gOPN$1(_toIobject(it));
-  var result = [];
-  var i = 0;
-  var key;
-  while (names.length > i) {
-    if (!_has(AllSymbols, key = names[i++]) && key != HIDDEN && key != META) result.push(key);
-  } return result;
-};
-var $getOwnPropertySymbols = function getOwnPropertySymbols(it) {
-  var IS_OP = it === ObjectProto$1;
-  var names = gOPN$1(IS_OP ? OPSymbols : _toIobject(it));
-  var result = [];
-  var i = 0;
-  var key;
-  while (names.length > i) {
-    if (_has(AllSymbols, key = names[i++]) && (IS_OP ? _has(ObjectProto$1, key) : true)) result.push(AllSymbols[key]);
-  } return result;
-};
-
-// 19.4.1.1 Symbol([description])
-if (!USE_NATIVE$1) {
-  $Symbol = function Symbol() {
-    if (this instanceof $Symbol) throw TypeError('Symbol is not a constructor!');
-    var tag = _uid(arguments.length > 0 ? arguments[0] : undefined);
-    var $set = function (value) {
-      if (this === ObjectProto$1) $set.call(OPSymbols, value);
-      if (_has(this, HIDDEN) && _has(this[HIDDEN], tag)) this[HIDDEN][tag] = false;
-      setSymbolDesc(this, tag, _propertyDesc(1, value));
-    };
-    if (_descriptors && setter) setSymbolDesc(ObjectProto$1, tag, { configurable: true, set: $set });
-    return wrap(tag);
-  };
-  _redefine($Symbol[PROTOTYPE$2], 'toString', function toString() {
-    return this._k;
-  });
-
-  _objectGopd.f = $getOwnPropertyDescriptor$1;
-  _objectDp.f = $defineProperty;
-  _objectGopn.f = _objectGopnExt.f = $getOwnPropertyNames;
-  _objectPie.f = $propertyIsEnumerable;
-  _objectGops.f = $getOwnPropertySymbols;
-
-  if (_descriptors && !_library) {
-    _redefine(ObjectProto$1, 'propertyIsEnumerable', $propertyIsEnumerable, true);
-  }
-
-  _wksExt.f = function (name) {
-    return wrap(_wks(name));
-  };
-}
-
-_export(_export.G + _export.W + _export.F * !USE_NATIVE$1, { Symbol: $Symbol });
-
-for (var es6Symbols = (
-  // 19.4.2.2, 19.4.2.3, 19.4.2.4, 19.4.2.6, 19.4.2.8, 19.4.2.9, 19.4.2.10, 19.4.2.11, 19.4.2.12, 19.4.2.13, 19.4.2.14
-  'hasInstance,isConcatSpreadable,iterator,match,replace,search,species,split,toPrimitive,toStringTag,unscopables'
-).split(','), j = 0; es6Symbols.length > j;)_wks(es6Symbols[j++]);
-
-for (var wellKnownSymbols = _objectKeys(_wks.store), k = 0; wellKnownSymbols.length > k;) _wksDefine(wellKnownSymbols[k++]);
-
-_export(_export.S + _export.F * !USE_NATIVE$1, 'Symbol', {
-  // 19.4.2.1 Symbol.for(key)
-  'for': function (key) {
-    return _has(SymbolRegistry, key += '')
-      ? SymbolRegistry[key]
-      : SymbolRegistry[key] = $Symbol(key);
-  },
-  // 19.4.2.5 Symbol.keyFor(sym)
-  keyFor: function keyFor(sym) {
-    if (!isSymbol(sym)) throw TypeError(sym + ' is not a symbol!');
-    for (var key in SymbolRegistry) if (SymbolRegistry[key] === sym) return key;
-  },
-  useSetter: function () { setter = true; },
-  useSimple: function () { setter = false; }
-});
-
-_export(_export.S + _export.F * !USE_NATIVE$1, 'Object', {
-  // 19.1.2.2 Object.create(O [, Properties])
-  create: $create,
-  // 19.1.2.4 Object.defineProperty(O, P, Attributes)
-  defineProperty: $defineProperty,
-  // 19.1.2.3 Object.defineProperties(O, Properties)
-  defineProperties: $defineProperties,
-  // 19.1.2.6 Object.getOwnPropertyDescriptor(O, P)
-  getOwnPropertyDescriptor: $getOwnPropertyDescriptor$1,
-  // 19.1.2.7 Object.getOwnPropertyNames(O)
-  getOwnPropertyNames: $getOwnPropertyNames,
-  // 19.1.2.8 Object.getOwnPropertySymbols(O)
-  getOwnPropertySymbols: $getOwnPropertySymbols
-});
-
-// Chrome 38 and 39 `Object.getOwnPropertySymbols` fails on primitives
-// https://bugs.chromium.org/p/v8/issues/detail?id=3443
-var FAILS_ON_PRIMITIVES = _fails(function () { _objectGops.f(1); });
-
-_export(_export.S + _export.F * FAILS_ON_PRIMITIVES, 'Object', {
-  getOwnPropertySymbols: function getOwnPropertySymbols(it) {
-    return _objectGops.f(_toObject(it));
-  }
-});
-
-// 24.3.2 JSON.stringify(value [, replacer [, space]])
-$JSON$1 && _export(_export.S + _export.F * (!USE_NATIVE$1 || _fails(function () {
-  var S = $Symbol();
-  // MS Edge converts symbol values to JSON as {}
-  // WebKit converts symbol values to JSON as null
-  // V8 throws on boxed symbols
-  return _stringify([S]) != '[null]' || _stringify({ a: S }) != '{}' || _stringify(Object(S)) != '{}';
-})), 'JSON', {
-  stringify: function stringify(it) {
-    var args = [it];
-    var i = 1;
-    var replacer, $replacer;
-    while (arguments.length > i) args.push(arguments[i++]);
-    $replacer = replacer = args[1];
-    if (!_isObject(replacer) && it === undefined || isSymbol(it)) return; // IE8 returns string on undefined
-    if (!_isArray(replacer)) replacer = function (key, value) {
-      if (typeof $replacer == 'function') value = $replacer.call(this, key, value);
-      if (!isSymbol(value)) return value;
-    };
-    args[1] = replacer;
-    return _stringify.apply($JSON$1, args);
-  }
-});
-
-// 19.4.3.4 Symbol.prototype[@@toPrimitive](hint)
-$Symbol[PROTOTYPE$2][TO_PRIMITIVE] || _hide($Symbol[PROTOTYPE$2], TO_PRIMITIVE, $Symbol[PROTOTYPE$2].valueOf);
-// 19.4.3.5 Symbol.prototype[@@toStringTag]
-_setToStringTag($Symbol, 'Symbol');
-// 20.2.1.9 Math[@@toStringTag]
-_setToStringTag(Math, 'Math', true);
-// 24.3.3 JSON[@@toStringTag]
-_setToStringTag(_global.JSON, 'JSON', true);
-
-_wksDefine('asyncIterator');
-
-_wksDefine('observable');
-
-var symbol = _core.Symbol;
-
-var symbol$1 = symbol;
-
-var _typeof_1 = createCommonjsModule(function (module) {
-function _typeof2(obj) { if (typeof symbol$1 === "function" && typeof iterator$1 === "symbol") { _typeof2 = function _typeof2(obj) { return typeof obj; }; } else { _typeof2 = function _typeof2(obj) { return obj && typeof symbol$1 === "function" && obj.constructor === symbol$1 && obj !== symbol$1.prototype ? "symbol" : typeof obj; }; } return _typeof2(obj); }
-
-function _typeof(obj) {
-  if (typeof symbol$1 === "function" && _typeof2(iterator$1) === "symbol") {
-    module.exports = _typeof = function _typeof(obj) {
-      return _typeof2(obj);
-    };
-  } else {
-    module.exports = _typeof = function _typeof(obj) {
-      return obj && typeof symbol$1 === "function" && obj.constructor === symbol$1 && obj !== symbol$1.prototype ? "symbol" : _typeof2(obj);
-    };
-  }
-
-  return _typeof(obj);
-}
-
-module.exports = _typeof;
-});
 
 var lastRevokeFn=null,nProxy=null;function isObject$1(o){return !!o&&("object"==_typeof_1(o)||"function"==typeof o)}nProxy=function(target,handler){if(!isObject$1(target)||!isObject$1(handler))throw new TypeError("Cannot create proxy with a non-object as target or handler");var throwRevoked=function(){};lastRevokeFn=function(){throwRevoked=function(trap){throw new TypeError("Cannot perform '".concat(trap,"' on a proxy that has been revoked"))};};var unsafeHandler=handler;for(var k in handler={get:null,set:null,apply:null,construct:null},unsafeHandler){if(!(k in handler))throw new TypeError("nProxy polyfill does not support trap '".concat(k,"'"));handler[k]=unsafeHandler[k];}"function"==typeof unsafeHandler&&(handler.apply=unsafeHandler.apply.bind(unsafeHandler));var proxy=this,isMethod=!1,targetIsFunction="function"==typeof target;(handler.apply||handler.construct||targetIsFunction)&&(proxy=function(){var usingNew=this&&this.constructor===proxy,args=Array.prototype.slice.call(arguments);if(throwRevoked(usingNew?"construct":"apply"),usingNew&&handler.construct)return handler.construct.call(this,target,args);if(!usingNew&&handler.apply)return handler.apply(target,this,args);if(targetIsFunction){if(usingNew){args.unshift(target);var f=target.bind.apply(target,args);return new f}return target.apply(this,args)}throw new TypeError(usingNew?"not a constructor":"not a function")},isMethod=!0);var getter=handler.get?function(prop){return throwRevoked("get"),handler.get(this,prop,proxy)}:function(prop){return throwRevoked("get"),this[prop]},setter=handler.set?function(prop,value){throwRevoked("set");var status=handler.set(this,prop,value,proxy);}:function(prop,value){throwRevoked("set"),this[prop]=value;},propertyNames=getOwnPropertyNames$1(target),propertyMap={};propertyNames.forEach(function(prop){if(!(isMethod&&prop in proxy)){var real=getOwnPropertyDescriptor$1(target,prop),desc={enumerable:!!real.enumerable,get:getter.bind(target,prop),set:setter.bind(target,prop)};defineProperty$1(proxy,prop,desc),propertyMap[prop]=!0;}});var prototypeOk=!0;if(setPrototypeOf$1?setPrototypeOf$1(proxy,getPrototypeOf$1(target)):proxy.__proto__?proxy.__proto__=target.__proto__:prototypeOk=!1,handler.get||!prototypeOk)for(var _k in target)propertyMap[_k]||defineProperty$1(proxy,_k,{get:getter.bind(target,_k)});return seal$1(target),seal$1(proxy),proxy},nProxy.revocable=function(target,handler){var p=new nProxy(target,handler);return {proxy:p,revoke:lastRevokeFn}},nProxy.revocable=nProxy.revocable;var Proxy$1 = "undefined"==typeof Proxy?nProxy:Proxy;
 
 var reqConfig={url:"",method:"get",params:{},data:{},headers:{},timeout:1e3},https={aliapp:function aliapp(config){return new promise$1(function(resolve,reject){var data=config.data,nData=isArray$2(data)?[]:{},headers=config.headers,val="";keys$1(headers).forEach(function(header){"content-type"===header.toLowerCase()&&(val=headers[header]);}),"application/json"===val.toLowerCase()?nData=stringify$1(data):keys$1(data).forEach(function(item){nData[item]="object"===data[item].toString().slice(1,7).toLowerCase()?stringify$1(data[item]):data[item];});var opts={url:"".concat(config.url).concat(config.qs?"?".concat(config.qs):""),data:nData,headers:config.headers,method:config.method,timeout:config.timeout,success:function success(res){resolve({data:res.data,headers:res.headers,status:res.status,statusText:""});},fail:function fail(err){reject(err);}};"GET"===config.method.toUpperCase()&&delete opts.data,requestCallBack(config,my.request(opts));})},weapp:function weapp(config){return new promise$1(function(resolve,reject){var data=config.data,nData=isArray$2(data)?[]:{},headers=config.headers,val="";keys$1(headers).forEach(function(header){"content-type"===header.toLowerCase()&&(val=headers[header]);}),"application/x-www-form-urlencoded"===val.toLowerCase()?keys$1(data).forEach(function(item){nData[item]="object"===data[item].toString().slice(1,7).toLowerCase()?stringify$1(data[item]):data[item];}):nData=data;var opts={url:"".concat(config.url).concat(config.qs?"?".concat(config.qs):""),data:nData,header:config.headers,method:config.method,success:function success(res){200!=res.statusCode&&(res.data={retcode:5e3,info:{errCode:res.statusCode,msg:res.data,tip:res.data},data:{}}),resolve({data:res.data,headers:res.header,status:res.statusCode,statusText:""});},fail:function fail(err){reject(err);},complete:function complete(){}};"GET"===config.method.toUpperCase()&&delete opts.data,requestCallBack(config,wx.request(opts));})},swan:function(_swan){function swan(){return _swan.apply(this,arguments)}return swan.toString=function(){return _swan.toString()},swan}(function(config){return new promise$1(function(resolve,reject){var data=config.data,nData=isArray$2(data)?[]:{},headers=config.headers,val="";keys$1(headers).forEach(function(header){"content-type"===header.toLowerCase()&&(val=headers[header]);}),"application/x-www-form-urlencoded"===val.toLowerCase()?keys$1(data).forEach(function(item){nData[item]="object"===data[item].toString().slice(1,7).toLowerCase()?stringify$1(data[item]):data[item];}):nData=data;var opts={url:"".concat(config.url).concat(config.qs?"?".concat(config.qs):""),data:nData,header:config.headers,method:config.method,success:function success(res){200!=res.statusCode&&(res.data={retcode:5e3,info:{errCode:res.statusCode,msg:res.data,tip:res.data},data:{}}),resolve({data:res.data,headers:res.header,status:res.statusCode,statusText:""});},fail:function fail(err){reject(err);},complete:function complete(){}};"GET"===config.method.toUpperCase()&&delete opts.data,requestCallBack(config,swan.request(opts));})})};function requestCallBack(){var config=0<arguments.length&&arguments[0]!==void 0?arguments[0]:{},task=1<arguments.length?arguments[1]:void 0;config&&config.getRequestTask&&"function"==typeof config.getRequestTask&&config.getRequestTask(task);}function http(opts){if("function"!=typeof https[opts.env])throw new Error("http env error!");return https[opts.env](assign_1(reqConfig,opts))}
 
-var retcode={OK:"FE-200",PARAM:"FE-5000",OTHER:"FE-5001",CATCH:"FE-5002"};function generator(){var list=0<arguments.length&&void 0!==arguments[0]?arguments[0]:{},opts=1<arguments.length&&void 0!==arguments[1]?arguments[1]:{},_this=2<arguments.length&&void 0!==arguments[2]?arguments[2]:{},listKeys=list,isArray=isArray$2(list);return isArray||(listKeys=keys$1(list)),_this=this||_this,listKeys.forEach(function(item){var fnName=isArray?item.name:item,listVal=isArray?item:list[item];if(listVal.name=fnName,!fnName)throw new Error("Function name is required!");if(_this[fnName])throw new Error("Duplicate statements in _this: ".concat(fnName));_this[fnName]=function(conf){var fn=function(){var apiOpts=0<arguments.length&&void 0!==arguments[0]?arguments[0]:{},apiConfig=1<arguments.length?arguments[1]:void 0,cb=2<arguments.length&&void 0!==arguments[2]?arguments[2]:function(){};return apiOpts.fnName=fnName,apiOpts.openResInterceptor=apiOpts.openResInterceptor||opts.openResInterceptor,apiOpts.resInterceptor=apiOpts.resInterceptor||opts.resInterceptor,apiOpts.resSuccessCallback=apiOpts.resSuccessCallback||opts.resSuccessCallback,_this._before=_this._before||opts._before,apiConfig.url=apiOpts.url||apiConfig.url,"function"==typeof _this._before?_this._before(apiOpts,apiConfig,function(moreData){apiOpts=merge_1(apiOpts,moreData),serialize(apiOpts.data||{},apiConfig.params,function(retData){cb(retData,apiOpts);});}):void serialize(apiOpts.data||{},apiConfig.params,function(retData){cb(retData,apiOpts);})};return getProxy(fn,JSON.parse(stringify$1(getConfig(conf,opts,fn))))}(listVal),listVal=null;}),_this}function hasBaseURL(url){return /^((http:\/\/)|(https:\/\/)|(:\/\/))/.test(url)||/^(localhost)/.test(url)}function getConfig(conf,defaultConf,proxy){var apiConfig={url:"",baseURL:defaultConf.baseURL,env:defaultConf.env,headers:defaultConf.headers,timeout:defaultConf.timeout,method:conf.method||defaultConf.method,model:conf.resSchema||{},interval:conf.interval||0,retryTimes:conf.retryTimes||0,pathname:getPathname(conf.apiName),params:getParams(conf.params),fnName:conf.name,signKey:conf.signKey,status:"",statusText:""},apiName=urlParse(conf.apiName);return apiConfig.url=apiConfig.baseURL+apiConfig.pathname,hasBaseURL(conf.apiName)&&(apiConfig=assign_1(apiConfig,{baseURL:apiName.origin,pathname:getPathname(apiName.pathname),url:apiName.href})),keys$1(apiConfig).forEach(function(key){if(proxy[key])throw new Error("Duplicate statements in proxy Function: ".concat(key));proxy[key]=apiConfig[key];}),merge_1({},conf,apiConfig)}function getRestfulUrl(){var url=0<arguments.length&&arguments[0]!==void 0?arguments[0]:"",data=1<arguments.length&&arguments[1]!==void 0?arguments[1]:{},re=/\{(.+?)\}/g,result=null;do result=re.exec(url),result&&1<result.length&&(url=url.replace(result[0],data[result[1]]||""));while(result);return url}function getParams(params){function setData(item,method){return {required:!!item.isNeed,method:method.toUpperCase()}}var temp={},getParams=params.get||params.GET||[],postParams=params.post||params.POST||[];return getParams.forEach(function(item){temp[item.param]=setData(item,"GET");}),postParams.forEach(function(item){temp[item.param]=setData(item,"POST");}),temp}function serialize(data,vaild){var cb=2<arguments.length&&arguments[2]!==void 0?arguments[2]:function(){};setTimeout(function(){var retData={retcode:"FE-5000",errMsg:"",data:{}},qs=[],getData={},postData={},isVaild=keys$1(vaild).every(function(param){var item=vaild[param],method=item.method,required=item.required,val=data[param],vaildResult=isVaildFn(val,param,required);return vaildResult.result?!("undefined"!=typeof val&&null!=val)||("GET"===method.toUpperCase()?(getData[param]=val,qs.push("".concat(param,"=").concat(encodeURIComponent(val)))):postData[param]=val,!0):(retData.errMsg=vaildResult.errMsg,!1)});isVaild?(retData.retcode=retcode.OK,retData.data={qs:qs.join("&"),postData:postData,getData:getData}):retData.retcode=retcode.PARAM,cb(retData);},0);}function isVaildFn(val,key,required){return required&&(null===val||"undefined"==typeof val)?{result:!1,errMsg:"param: ".concat(key,". Is Required!")}:{result:!0,errMsg:""}}function getPathname(pathname){return /^\//.test(pathname)?pathname:"/".concat(pathname)}function getProxy(fn){var apiConfig=1<arguments.length&&arguments[1]!==void 0?arguments[1]:{};return new Proxy$1(fn,{get:function get(target,name){return apiConfig[name]},set:function set(){throw new Error("The property is readonly!")},apply:function apply(target,ctx,args){return new promise$1(function(resolve,reject){function request(reqData){++reqTime,target(reqData||{},apiConfig,function(retData,apiOpts){var data=retData.data;if(apiConfig=merge_1(apiConfig,{headers:apiOpts.headers,timeout:apiOpts.timeout,fnName:apiOpts.fnName}),apiOpts.err)return reject({retcode:apiOpts.err.retcode,msg:apiOpts.err.msg,headers:apiConfig.headers});if(retData.retcode!==retcode.OK)return reject({retcode:retData.retcode,msg:retData.errMsg,headers:apiConfig.headers});var reqUrl=apiConfig.url;apiOpts.restful&&(reqUrl=getRestfulUrl(reqUrl,apiOpts.restful)),http({url:reqUrl,timeout:apiConfig.timeout,env:apiConfig.env,method:apiConfig.method,headers:apiConfig.headers,data:data.postData,qs:data.qs,params:data.getData,getRequestTask:apiOpts.getRequestTask}).then(function(res){var serverData=res.data;apiConfig.status=res.status,apiConfig.statusText=res.statusText;var isOpenResInterceptor="function"==typeof apiOpts.openResInterceptor&&apiOpts.openResInterceptor.call(apiConfig,serverData);if(isOpenResInterceptor&&reqTime<retryTimes+(retryTimes?1:2))return apiOpts.resInterceptor.call(apiConfig,serverData,function(err){var nOpts=1<arguments.length&&void 0!==arguments[1]?arguments[1]:{};if(err)return reject(err);var data=merge_1(reqData.data,nOpts.data),headers=merge_1(apiOpts.headers,nOpts.headers);reqData.data=data,apiOpts.headers=headers,request(reqData);});if("function"==typeof apiOpts.resSuccessCallback&&apiOpts.resSuccessCallback(serverData,function(err,resData){var retcode=2<arguments.length&&void 0!==arguments[2]?arguments[2]:200;return err?void reject(err||fail({retcode:500,headers:res.headers})):(reqTime=0,isEmpty(apiConfig.model)||(resData=modelFn(apiConfig.model,resData)),resolve(success({data:resData,headers:res.headers,retcode:retcode})))}),/^2\d/.test(+serverData.retcode)){reqTime=0;var _data=serverData.data;return isEmpty(apiConfig.model)||(_data=modelFn(apiConfig.model,_data)),resolve(success({data:_data,headers:res.headers,retcode:serverData.retcode}))}reject(fail({retcode:serverData.retcode,msg:serverData.msg,headers:res.headers}));},function(err){var errJSONMsg=stringify$1(err);return errJSONMsg.toLowerCase().includes("abort")?reject(fail({retcode:retcode.OTHER,msg:"error"===getType$1(err)?err.toString():stringify$1(err)})):void retry(reqTime,retryTimes,interval,function(isEnd){return isEnd?(reqTime=0,reject(fail({retcode:retcode.OTHER,msg:"error"===getType$1(err)?err.toString():stringify$1(err)}))):void request(reqData)})})["catch"](function(catchErr){reqTime=0,reject(fail({retcode:retcode.CATCH,msg:"error"===getType$1(catchErr)?catchErr.toString():stringify$1(catchErr)}));});});}function canRetryFn(interval,retryTimes){return !(isNaN(interval)||isNaN(retryTimes))&&(interval=_parseInt$2(interval),retryTimes=_parseInt$2(retryTimes),!(0>=interval||0>=retryTimes))}function retry(times,retryTimes,interval){var cb=3<arguments.length&&arguments[3]!==void 0?arguments[3]:function(){};return canRetryFn(interval,retryTimes)&&reqTime<=retryTimes?setTimeout(function(){cb(times>retryTimes);},interval):void cb(!0)}var _apiConfig=apiConfig,interval=_apiConfig.interval,_apiConfig2=apiConfig,retryTimes=_apiConfig2.retryTimes,reqTime=0;request(args[0]||{});})}})}function success(res){return {data:res.data,headers:res.headers,retcode:res.retcode}}function fail(res){return {retcode:res.retcode||"FE-5001",msg:res.msg||"unknown",headers:res.headers||{}}}function modelFn(schema,data){var feData=isArray$2(data)?[]:{};return jsonSchema2api(feData,data,schema),feData}function isEmpty(obj){return !obj||!keys$1(obj).length}function getType$1(val){return Object.prototype.toString.call(val).slice(8,-1).toLowerCase()}
+var retcode={OK:"FE-200",PARAM:"FE-5000",OTHER:"FE-5001",CATCH:"FE-5002"};function generator(){var list=0<arguments.length&&void 0!==arguments[0]?arguments[0]:{},opts=1<arguments.length&&void 0!==arguments[1]?arguments[1]:{},_this=2<arguments.length&&void 0!==arguments[2]?arguments[2]:{},listKeys=list,isArray=isArray$2(list);return isArray||(listKeys=keys$1(list)),_this=this||_this,listKeys.forEach(function(item){var fnName=isArray?item.name:item,listVal=isArray?item:list[item];if(listVal.name=fnName,!fnName)throw new Error("Function name is required!");if(_this[fnName])throw new Error("Duplicate statements in _this: ".concat(fnName));_this[fnName]=function(conf){var fn=function(){var apiOpts=0<arguments.length&&void 0!==arguments[0]?arguments[0]:{},apiConfig=1<arguments.length?arguments[1]:void 0,cb=2<arguments.length&&void 0!==arguments[2]?arguments[2]:function(){};return apiOpts.fnName=fnName,apiOpts.openResInterceptor=apiOpts.openResInterceptor||opts.openResInterceptor,apiOpts.resInterceptor=apiOpts.resInterceptor||opts.resInterceptor,apiOpts.resSuccessCallback=apiOpts.resSuccessCallback||opts.resSuccessCallback,_this._before=_this._before||opts._before,apiConfig.url=apiOpts.url||apiConfig.url,"function"==typeof _this._before?_this._before(apiOpts,apiConfig,function(moreData){apiOpts=merge_1(apiOpts,moreData),serialize(apiOpts.data||{},apiConfig.params,function(retData){cb(retData,apiOpts);});}):void serialize(apiOpts.data||{},apiConfig.params,function(retData){cb(retData,apiOpts);})};return getProxy(fn,JSON.parse(stringify$1(getConfig(conf,opts,fn))))}(listVal),listVal=null;}),_this}function hasBaseURL(url){return /^((http:\/\/)|(https:\/\/)|(:\/\/))/.test(url)||/^(localhost)/.test(url)}function getConfig(conf,defaultConf,proxy){var apiConfig={url:"",baseURL:defaultConf.baseURL,env:defaultConf.env,headers:defaultConf.headers,timeout:defaultConf.timeout,method:conf.method||defaultConf.method,model:conf.resSchema||{},interval:conf.interval||0,retryTimes:conf.retryTimes||0,pathname:getPathname(conf.apiName),params:getParams(conf.params),fnName:conf.name,signKey:conf.signKey,status:"",statusText:""},apiName=urlParse(conf.apiName);return apiConfig.url=apiConfig.baseURL+apiConfig.pathname,hasBaseURL(conf.apiName)&&(apiConfig=assign_1(apiConfig,{baseURL:apiName.origin,pathname:getPathname(apiName.pathname),url:apiName.href})),keys$1(apiConfig).forEach(function(key){if(proxy[key])throw new Error("Duplicate statements in proxy Function: ".concat(key));proxy[key]=apiConfig[key];}),merge_1({},conf,apiConfig)}function getRestfulUrl(){var url=0<arguments.length&&arguments[0]!==void 0?arguments[0]:"",data=1<arguments.length&&arguments[1]!==void 0?arguments[1]:{},re=/\{(.+?)\}/g,result=null;do result=re.exec(url),result&&1<result.length&&(url=url.replace(result[0],data[result[1]]||""));while(result);return url}function getParams(params){function setData(item,method){return {required:!!item.isNeed,method:method.toUpperCase()}}var temp={},getParams=params.get||params.GET||[],postParams=params.post||params.POST||[];return getParams.forEach(function(item){temp[item.param]=setData(item,"GET");}),postParams.forEach(function(item){temp[item.param]=setData(item,"POST");}),temp}function serialize(data,vaild){var cb=2<arguments.length&&arguments[2]!==void 0?arguments[2]:function(){};setTimeout(function(){var retData={retcode:"FE-5000",errMsg:"",data:{}},qs=[],getData={},postData={},isVaild=keys$1(vaild).every(function(param){var item=vaild[param],method=item.method,required=item.required,val=data[param],vaildResult=isVaildFn(val,param,required);return vaildResult.result?!("undefined"!=typeof val&&null!=val)||("GET"===method.toUpperCase()?(getData[param]=val,qs.push("".concat(param,"=").concat(encodeURIComponent(val)))):postData[param]=val,!0):(retData.errMsg=vaildResult.errMsg,!1)});isVaild?(retData.retcode=retcode.OK,retData.data={qs:qs.join("&"),postData:postData,getData:getData}):retData.retcode=retcode.PARAM,cb(retData);},0);}function isVaildFn(val,key,required){return required&&(null===val||"undefined"==typeof val)?{result:!1,errMsg:"param: ".concat(key,". Is Required!")}:{result:!0,errMsg:""}}function getPathname(pathname){return /^\//.test(pathname)?pathname:"/".concat(pathname)}function getProxy(fn){var apiConfig=1<arguments.length&&arguments[1]!==void 0?arguments[1]:{};return new Proxy$1(fn,{get:function get(target,name){return apiConfig[name]},set:function set(){throw new Error("The property is readonly!")},apply:function apply(target,ctx,args){return new promise$1(function(resolve,reject){function request(reqData){++reqTime,target(reqData||{},apiConfig,function(retData,apiOpts){var data=retData.data;if(apiConfig=merge_1(apiConfig,{headers:apiOpts.headers,timeout:apiOpts.timeout,fnName:apiOpts.fnName}),apiOpts.err)return ctx.emit("cnfapi:res:reject",{retcode:apiOpts.err.retcode,msg:apiOpts.err.msg,headers:apiConfig.headers}),reject({retcode:apiOpts.err.retcode,msg:apiOpts.err.msg,headers:apiConfig.headers});if(retData.retcode!==retcode.OK)return ctx.emit("cnfapi:res:reject",{retcode:retData.retcode,msg:retData.errMsg,headers:apiConfig.headers}),reject({retcode:retData.retcode,msg:retData.errMsg,headers:apiConfig.headers});var reqUrl=apiConfig.url;apiOpts.restful&&(reqUrl=getRestfulUrl(reqUrl,apiOpts.restful)),ctx.emit("cnfapi:req:before",{url:reqUrl,timeout:apiConfig.timeout,env:apiConfig.env,method:apiConfig.method,headers:apiConfig.headers,data:data.postData,qs:data.qs,params:data.getData,getRequestTask:apiOpts.getRequestTask}),http({url:reqUrl,timeout:apiConfig.timeout,env:apiConfig.env,method:apiConfig.method,headers:apiConfig.headers,data:data.postData,qs:data.qs,params:data.getData,getRequestTask:apiOpts.getRequestTask}).then(function(res){var serverData=res.data;apiConfig.status=res.status,apiConfig.statusText=res.statusText;var isOpenResInterceptor="function"==typeof apiOpts.openResInterceptor&&apiOpts.openResInterceptor.call(apiConfig,serverData);if(isOpenResInterceptor&&reqTime<retryTimes+(retryTimes?1:2))return apiOpts.resInterceptor.call(apiConfig,serverData,function(err){var nOpts=1<arguments.length&&void 0!==arguments[1]?arguments[1]:{};if(err)return ctx.emit("cnfapi:res:reject",err),reject(err);var data=merge_1(reqData.data,nOpts.data),headers=merge_1(apiOpts.headers,nOpts.headers);reqData.data=data,apiOpts.headers=headers,request(reqData);});if("function"==typeof apiOpts.resSuccessCallback&&apiOpts.resSuccessCallback(serverData,function(err,resData){var retcode=2<arguments.length&&void 0!==arguments[2]?arguments[2]:200;return err?void(ctx.emit("cnfapi:res:reject",err||fail({retcode:500,headers:res.headers})),reject(err||fail({retcode:500,headers:res.headers}))):(reqTime=0,isEmpty(apiConfig.model)||(resData=modelFn(apiConfig.model,resData)),resolve(success({data:resData,headers:res.headers,retcode:retcode})))}),/^2\d/.test(+serverData.retcode)){reqTime=0;var _data=serverData.data;return isEmpty(apiConfig.model)||(_data=modelFn(apiConfig.model,_data)),ctx.emit("cnfapi:res:resolve",success({data:_data,headers:res.headers,retcode:serverData.retcode})),resolve(success({data:_data,headers:res.headers,retcode:serverData.retcode}))}ctx.emit("cnfapi:res:reject",fail({retcode:serverData.retcode,msg:serverData.msg,headers:res.headers})),reject(fail({retcode:serverData.retcode,msg:serverData.msg,headers:res.headers}));},function(err){var errJSONMsg=stringify$1(err);return errJSONMsg.toLowerCase().includes("abort")?(ctx.emit("cnfapi:res:reject",fail({retcode:retcode.OTHER,msg:"error"===getType$1(err)?err.toString():stringify$1(err)})),reject(fail({retcode:retcode.OTHER,msg:"error"===getType$1(err)?err.toString():stringify$1(err)}))):void retry(reqTime,retryTimes,interval,function(isEnd){return isEnd?(reqTime=0,ctx.emit("cnfapi:res:reject",fail({retcode:retcode.OTHER,msg:"error"===getType$1(err)?err.toString():stringify$1(err)})),reject(fail({retcode:retcode.OTHER,msg:"error"===getType$1(err)?err.toString():stringify$1(err)}))):void request(reqData)})})["catch"](function(catchErr){reqTime=0,ctx.emit("cnfapi:res:reject",fail({retcode:retcode.CATCH,msg:"error"===getType$1(catchErr)?catchErr.toString():stringify$1(catchErr)})),reject(fail({retcode:retcode.CATCH,msg:"error"===getType$1(catchErr)?catchErr.toString():stringify$1(catchErr)}));});});}function canRetryFn(interval,retryTimes){return !(isNaN(interval)||isNaN(retryTimes))&&(interval=_parseInt$2(interval),retryTimes=_parseInt$2(retryTimes),!(0>=interval||0>=retryTimes))}function retry(times,retryTimes,interval){var cb=3<arguments.length&&arguments[3]!==void 0?arguments[3]:function(){};return canRetryFn(interval,retryTimes)&&reqTime<=retryTimes?setTimeout(function(){cb(times>retryTimes);},interval):void cb(!0)}var _apiConfig=apiConfig,interval=_apiConfig.interval,_apiConfig2=apiConfig,retryTimes=_apiConfig2.retryTimes,reqTime=0;request(args[0]||{});})}})}function success(res){return {data:res.data,headers:res.headers,retcode:res.retcode}}function fail(res){return {retcode:res.retcode||"FE-5001",msg:res.msg||"unknown",headers:res.headers||{}}}function modelFn(schema,data){var feData=isArray$2(data)?[]:{};return jsonSchema2api(feData,data,schema),feData}function isEmpty(obj){return !obj||!keys$1(obj).length}function getType$1(val){return Object.prototype.toString.call(val).slice(8,-1).toLowerCase()}
 
-var pipe=function(){function next(err){if(err)return errHandle.call(_this,err,_this);var fn=funcStack.shift();if("function"!=typeof fn)return end.call(_this,_this);var fnType=getType(fn).toLowerCase();if("asyncfunction"===fnType||"promise"===fnType)return fn.call(_this,_this)["catch"](function(e){errHandle.call(_this,e,_this);});try{fn.call(_this,_this);}catch(e){errHandle.call(_this,e,_this);}}function getProxyFn(target){var proxy=new Proxy$1(target,{get:getFn,set:setFn});return proxy}function getFn(target,propName){return "array"===getType(target[propName])&&1>target[propName].length?target[propName]:"object"===getType(target[propName])?new Proxy$1(target[propName],{get:getFn,set:setFn}):("undefined"===getType(target[propName])&&console.error("get ".concat(propName," not in this! please define in data")),target[propName])}function setFn(target,key,val){return "undefined"===getType(target[key])?(console.error("set ".concat(key," not in this! please define in data")),!0):(target[key]=val,!0)}function merge2this(){var _this=0<arguments.length&&void 0!==arguments[0]?arguments[0]:{},source=1<arguments.length?arguments[1]:void 0;return keys$1(source).forEach(function(key){if("undefined"!==getType(_this[key]))throw new Error("Duplicate ".concat(key," in this"));_this[key]=source[key];}),JSON.parse(stringify$1(_this))}function getType(val){return val&&val.toString&&"object"===val.toString().slice(1,7).toLowerCase()?val.toString().slice(8,-1).toLowerCase():Object.prototype.toString.call(val).slice(8,-1).toLowerCase()}var _ref=0<arguments.length&&arguments[0]!==void 0?arguments[0]:{},_ref$fnObj=_ref.fnObj,fnObj=void 0===_ref$fnObj?{}:_ref$fnObj,_ref$_this=_ref._this,_this=void 0===_ref$_this?{}:_ref$_this,_ref$data=_ref.data,data=void 0===_ref$data?{}:_ref$data,that=JSON.parse(stringify$1(_this));data=JSON.parse(stringify$1(data)),that=_this=merge2this(_this,data);var funcStack=[],errHandle=function(){},end=function(){};that.next=_this.next=next;var oproxy=new Proxy$1({setData:null,start:null,end:null,catch:null,next:null},{get:function get(pipeObject,fnName){return "setData"===fnName?function(data){var _that=that,next=_that.next;return that=merge2this(that,data),that.next=next,_this=getProxyFn(that),oproxy}:"start"===fnName?function(){return setTimeout(function(){next();},0),oproxy}:"end"===fnName?function(cb){return end=(cb||function(){}).bind(_this),oproxy}:"catch"===fnName?function(cb){return errHandle=(cb||function(){}).bind(_this),oproxy}:"next"===fnName?function(cb){return funcStack.push(cb||function(){}),oproxy}:(funcStack.push(fnObj[fnName]),function(){return oproxy})}});return oproxy};
-
-var EventEmit=function(){function EventEmit(){classCallCheck(this,EventEmit);}return createClass(EventEmit,[{key:"on",value:function on(){var _ref=0<arguments.length&&void 0!==arguments[0]?arguments[0]:{},_ref$evt=_ref.evt,evt=void 0===_ref$evt?"noevt":_ref$evt,handle=_ref.handle,events=this.events;delete this.events;var event=events[evt];if(event||(event=[]),"function"!=typeof handle)throw new Error("Event Handle Not a Function in ".concat(evt,"!"));event.push(handle),events[evt]=event,defineProperty$1(this,"events",{get:function get(){return events},configurable:!0});}},{key:"emit",value:function emit(){var _ref2=0<arguments.length&&void 0!==arguments[0]?arguments[0]:{},_ref2$evt=_ref2.evt,evt=void 0===_ref2$evt?"noevt":_ref2$evt,_ref2$data=_ref2.data,data=void 0===_ref2$data?{}:_ref2$data,_ref2$callback=_ref2.callback,callback=void 0===_ref2$callback?function(){}:_ref2$callback;evt&&"noevt"!==evt||console.warn("The event name Not Input! You will emit the default event!!"),this.pipe({evt:evt,data:data}).end(function(){callback(null,this.source);})["catch"](function(err){callback(err);});}},{key:"remove",value:function remove(){var _ref3=0<arguments.length&&void 0!==arguments[0]?arguments[0]:{},evt=_ref3.evt;return evt||this.events[evt]?void delete this.events[evt]:console.error("Please Input correct Event Name in remove Function!!")}},{key:"pipe",value:function pipe$1(opts){var eventHandles=this.events[opts.evt];if(!isArray$2(eventHandles))return console.log("Event Not Have Correct Handle! Event Name: ".concat(opts.evt,"!!")),!1;var pipeObj=pipe({data:{body:opts.data,source:null}}).next(function(){eventHandles.forEach(function(event){pipeObj.next(function(){var isAsync=!1,requestObj={source:this.source,body:this.body},responseObj={end:function(_this){return function(err,source){return isAsync=!0,err?_this.next(err):void(_this.source=source,_this.next())}}(this)},source=event(requestObj,responseObj);isAsync||"undefined"==typeof source||null===source||(this.source=source,this.next());});}),this.next();}).start();return pipeObj}},{key:"events",get:function get(){return {noevt:[function(){}]}}}]),EventEmit}();
-
-function _getType(val){return Object.prototype.toString.call(val).slice(8,-1).toLowerCase()}var Api=function(){function Api(){var conf=0<arguments.length&&void 0!==arguments[0]?arguments[0]:{},apiList=1<arguments.length&&void 0!==arguments[1]?arguments[1]:{};classCallCheck(this,Api);var listType=this.getType(apiList);if("object"!==this.getType(conf)||"object"!==listType&&"array"!==listType)throw new Error("constructor params require Object type");var _tempApiList=JSON.parse(stringify$1(apiList));this.merge=merge_1,this.outConf=conf,defineProperty$1(this,"apiList",{get:function get(){return _tempApiList}}),this.init();}return createClass(Api,[{key:"init",value:function init(){this.mergeConf(this.initConf,this.outConf),generator.apply(this,[JSON.parse(stringify$1(this.apiList)),this.defaultOpts]);}},{key:"mergeConf",value:function mergeConf(obj,sources){var _this=this,temp={};if("object"!==this.getType(obj)||"object"!==this.getType(sources))throw new Error("mergeConf argument Not Object");return keys$1(obj).forEach(function(key){var val=obj[key],vaildResult=null,vaildFn=obj[key].vaildFn,defaultVal="function"==typeof obj[key]["default"]&&obj[key]["default"].apply(_this)||"";if(val.required&&!defaultVal&&!sources[key])throw new Error("".concat(val.errMsg));if(temp[key]=sources[key]||defaultVal,"function"==typeof vaildFn&&(vaildResult=vaildFn(temp[key])),null!=vaildResult&&!vaildResult.result)throw new Error("".concat(vaildResult.errMsg))}),temp}},{key:"openResInterceptor",value:function openResInterceptor(){return this.conf.openResInterceptor.apply(this,arguments)}},{key:"_before",value:function _before(apiConf,cb){cb(apiConf);}},{key:"getType",value:function getType(val){return _getType(val)}},{key:"conf",get:function get(){return this.mergeConf(this.initConf,this.outConf)}},{key:"initConf",get:function get(){return {baseURL:{required:!0,errMsg:"baseURL is required",vaildFn:function vaildFn(val){return {result:/^((http:\/\/)|(https:\/\/)|(:\/\/))([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,6}(\/)?/.test(val)||/^((http:\/\/)|(https:\/\/)|(:\/\/))(localhost)/.test(val),errMsg:"invalid baseURL"}}},timeout:{required:!0,errMsg:"timeout is required or not 0",default:function _default(){return 3e3},vaildFn:function vaildFn(val){return {result:!isNaN(val)&&0!=val,errMsg:"invalid timeout"}}},env:{required:!0,errMsg:"invalid env",default:function _default(){return "browser"},vaildFn:function vaildFn(val){var resultObj={result:-1<["browser","aliapp","weapp","swan"].indexOf(val),errMsg:"invalid env, env must in [\"browser\", \"aliapp\" ,\"weapp\", \"swan\"]"};return ("aliapp"===val||"weapp"===val)&&(window=void 0,document=void 0),"browser"===val&&(resultObj={result:window&&document&&"undefined"!=typeof window&&"undefined"!=typeof document,errMsg:"invalid env, env not in browser, env must in [\"browser\", \"aliapp\" ,\"weapp\", \"swan\"]"}),resultObj}},openResInterceptor:{required:!1,default:function _default(){return function(){return !1}}},resInterceptor:{required:!1,default:function _default(){return function(){}}},resSuccessCallback:{required:!1,default:function _default(){return function(serverData,next){next(!1,serverData);}}},resFormat:{description:"\u63A5\u53E3\u8FD4\u56DE\u683C\u5F0F",required:!1,default:function _default(){return {type:"object",properties:{retcode:{type:"string"},msg:{type:"string"},data:{type:"object"}}}}}}}},{key:"defaultOpts",get:function get(){return this.merge({method:"GET",headers:{"Content-Type":"application/x-www-form-urlencoded"}},this.outConf,this.conf)}}]),Api}();
+function _getType(val){return Object.prototype.toString.call(val).slice(8,-1).toLowerCase()}var Api=function(_EventEmitter){function Api(){var _this,conf=0<arguments.length&&void 0!==arguments[0]?arguments[0]:{},apiList=1<arguments.length&&void 0!==arguments[1]?arguments[1]:{};classCallCheck(this,Api),_this=possibleConstructorReturn(this,getPrototypeOf$2(Api).call(this));var listType=_this.getType(apiList);if("object"!==_this.getType(conf)||"object"!==listType&&"array"!==listType)throw new Error("constructor params require Object type");var _tempApiList=JSON.parse(stringify$1(apiList));return _this.merge=merge_1,_this.outConf=conf,defineProperty$1(assertThisInitialized(_this),"apiList",{get:function get(){return _tempApiList}}),_this.init(),_this}return inherits(Api,_EventEmitter),createClass(Api,[{key:"init",value:function init(){this.mergeConf(this.initConf,this.outConf),generator.apply(this,[JSON.parse(stringify$1(this.apiList)),this.defaultOpts]);}},{key:"mergeConf",value:function mergeConf(obj,sources){var _this2=this,temp={};if("object"!==this.getType(obj)||"object"!==this.getType(sources))throw new Error("mergeConf argument Not Object");return keys$1(obj).forEach(function(key){var val=obj[key],vaildResult=null,vaildFn=obj[key].vaildFn,defaultVal="function"==typeof obj[key]["default"]&&obj[key]["default"].apply(_this2)||"";if(val.required&&!defaultVal&&!sources[key])throw new Error("".concat(val.errMsg));if(temp[key]=sources[key]||defaultVal,"function"==typeof vaildFn&&(vaildResult=vaildFn(temp[key])),null!=vaildResult&&!vaildResult.result)throw new Error("".concat(vaildResult.errMsg))}),temp}},{key:"openResInterceptor",value:function openResInterceptor(){return this.conf.openResInterceptor.apply(this,arguments)}},{key:"_before",value:function _before(apiConf,cb){cb(apiConf);}},{key:"getType",value:function getType(val){return _getType(val)}},{key:"conf",get:function get(){return this.mergeConf(this.initConf,this.outConf)}},{key:"initConf",get:function get(){return {baseURL:{required:!0,errMsg:"baseURL is required",vaildFn:function vaildFn(val){return {result:/^((http:\/\/)|(https:\/\/)|(:\/\/))([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,6}(\/)?/.test(val)||/^((http:\/\/)|(https:\/\/)|(:\/\/))(localhost)/.test(val),errMsg:"invalid baseURL"}}},timeout:{required:!0,errMsg:"timeout is required or not 0",default:function _default(){return 3e3},vaildFn:function vaildFn(val){return {result:!isNaN(val)&&0!=val,errMsg:"invalid timeout"}}},env:{required:!0,errMsg:"invalid env",default:function _default(){return "browser"},vaildFn:function vaildFn(val){var resultObj={result:-1<["browser","aliapp","weapp","swan"].indexOf(val),errMsg:"invalid env, env must in [\"browser\", \"aliapp\" ,\"weapp\", \"swan\"]"};return ("aliapp"===val||"weapp"===val)&&(window=void 0,document=void 0),"browser"===val&&(resultObj={result:window&&document&&"undefined"!=typeof window&&"undefined"!=typeof document,errMsg:"invalid env, env not in browser, env must in [\"browser\", \"aliapp\" ,\"weapp\", \"swan\"]"}),resultObj}},openResInterceptor:{required:!1,default:function _default(){return function(){return !1}}},resInterceptor:{required:!1,default:function _default(){return function(){}}},resSuccessCallback:{required:!1,default:function _default(){return function(serverData,next){next(!1,serverData);}}},resFormat:{description:"\u63A5\u53E3\u8FD4\u56DE\u683C\u5F0F",required:!1,default:function _default(){return {type:"object",properties:{retcode:{type:"string"},msg:{type:"string"},data:{type:"object"}}}}}}}},{key:"defaultOpts",get:function get(){return this.merge({method:"GET",headers:{"Content-Type":"application/x-www-form-urlencoded"}},this.outConf,this.conf)}}]),Api}(EventEmitter);
 
 export default Api;
 //# sourceMappingURL=cnfapi-miniprogram.esm.js.map
