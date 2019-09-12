@@ -1,6 +1,6 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('bluebird'), require('url-parse'), require('events')) :
-  typeof define === 'function' && define.amd ? define(['bluebird', 'url-parse', 'events'], factory) :
+  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('promise'), require('url-parse'), require('events')) :
+  typeof define === 'function' && define.amd ? define(['promise', 'url-parse', 'events'], factory) :
   (global = global || self, (function () {
     var current = global['cnfapi-miniprogram'];
     var exports = global['cnfapi-miniprogram'] = factory(global.Promise, global.urlParse, global.EventEmitter);

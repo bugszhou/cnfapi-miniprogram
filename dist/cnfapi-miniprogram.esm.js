@@ -1,4 +1,4 @@
-import Promise from 'bluebird';
+import Promise from 'promise';
 import urlParse from 'url-parse';
 import EventEmitter from 'events';
 
