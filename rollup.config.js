@@ -5,7 +5,7 @@ import babel from 'rollup-plugin-babel';
 import { terser } from "rollup-plugin-terser";
 
 export default {
-  external: ['lodash', 'url-parse', 'events'],
+  external: ['lodash', 'url-parse', 'events', 'bluebird'],
   input: 'src/entry/index.js',
   output: [
     {

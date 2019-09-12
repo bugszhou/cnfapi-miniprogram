@@ -2,6 +2,7 @@
  * 借助第三方请求库
  */
 
+import Promise from 'bluebird';
 import assign from 'lodash/assign';
 
 const reqConfig = {
