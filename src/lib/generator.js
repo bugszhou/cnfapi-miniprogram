@@ -9,7 +9,7 @@
  */
 
 
-import Promise from 'bluebird';
+import Promise from 'promise';
 import urlParse from 'url-parse';
 import merge from 'lodash/merge';
 import assign from 'lodash/assign';

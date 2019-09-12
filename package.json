@@ -26,9 +26,9 @@
     "dependencies": {
         "@babel/runtime": "^7.5.4",
         "@babel/runtime-corejs2": "^7.5.4",
-        "bluebird": "^3.5.5",
         "events": "^3.0.0",
         "lodash": "^4.17.14",
+        "promise": "^8.0.3",
         "url-parse": "^1.4.7"
     },
     "devDependencies": {
