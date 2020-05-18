@@ -55,6 +55,7 @@ export function generator(list = {}, opts = {}, _this = {}) {
         apiOpts.openResInterceptor = apiOpts.openResInterceptor || opts.openResInterceptor;
         apiOpts.resInterceptor = apiOpts.resInterceptor || opts.resInterceptor;
         apiOpts.resSuccessCallback = apiOpts.resSuccessCallback || opts.resSuccessCallback;
+        apiOpts.customerHttp = apiOpts.customerHttp || opts.customerHttp;
         _this._before = _this._before || opts._before;
         apiConfig.url = apiOpts.url || apiConfig.url;
 
