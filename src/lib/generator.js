@@ -314,6 +314,12 @@ function getProxy(fn, apiConfig = {}) {
                 retcode: apiOpts.err.retcode,
                 msg: apiOpts.err.msg,
                 headers: apiConfig.headers,
+                req: {
+                  headers: apiConfig.headers,
+                  data: data.postData,
+                  qs: data.qs,
+                  params: data.getData,
+                },
               });
               return reject({
                 retcode: apiOpts.err.retcode,
@@ -328,6 +334,12 @@ function getProxy(fn, apiConfig = {}) {
                 retcode: retData.retcode,
                 msg: retData.errMsg,
                 headers: apiConfig.headers,
+                req: {
+                  headers: apiConfig.headers,
+                  data: data.postData,
+                  qs: data.qs,
+                  params: data.getData,
+                },
               });
               return reject({
                 retcode: retData.retcode,
@@ -352,7 +364,11 @@ function getProxy(fn, apiConfig = {}) {
               params: data.getData,
               getRequestTask: apiOpts.getRequestTask,
             });
-            http({
+            let reqHttp = http;
+            if (apiOpts.customerHttp && typeof apiOpts.customerHttp === 'function') {
+              reqHttp = apiOpts.customerHttp;
+            }
+            reqHttp({
               url: reqUrl,
               timeout: apiConfig.timeout,
               env: apiConfig.env,
@@ -382,6 +398,12 @@ function getProxy(fn, apiConfig = {}) {
                   if (err) {
                     ctx.emit('cnfapi:res:reject', {
                       fnName: apiOpts.fnName,
+                      req: {
+                        headers: apiConfig.headers,
+                        data: data.postData,
+                        qs: data.qs,
+                        params: data.getData,
+                      },
                       ...err
                     });
                     return reject(err);
@@ -395,7 +417,7 @@ function getProxy(fn, apiConfig = {}) {
                 });
               }
               if (typeof apiOpts.resSuccessCallback === 'function') {
-                return apiOpts.resSuccessCallback(serverData, (err, resData, retcode = 200) => {
+                return apiOpts.resSuccessCallback.bind(ctx)(serverData, (err, resData, retcode = 200) => {
                   if (!err) {
                     reqTime = 0;
                     /**
@@ -406,6 +428,12 @@ function getProxy(fn, apiConfig = {}) {
                     }
                     ctx.emit('cnfapi:res:resolve', {
                       fnName: apiOpts.fnName,
+                      req: {
+                        headers: apiConfig.headers,
+                        data: data.postData,
+                        qs: data.qs,
+                        params: data.getData,
+                      },
                       ...success({
                         data: resData,
                         headers: res.headers,
@@ -420,6 +448,12 @@ function getProxy(fn, apiConfig = {}) {
                   }
                   ctx.emit('cnfapi:res:reject', {
                     fnName: apiOpts.fnName,
+                    req: {
+                      headers: apiConfig.headers,
+                      data: data.postData,
+                      qs: data.qs,
+                      params: data.getData,
+                    },
                     ...(err || fail({
                       retcode: 500,
                       headers: res.headers,
@@ -442,6 +476,12 @@ function getProxy(fn, apiConfig = {}) {
                 }
                 ctx.emit('cnfapi:res:resolve', {
                   fnName: apiOpts.fnName,
+                  req: {
+                    headers: apiConfig.headers,
+                    data: data.postData,
+                    qs: data.qs,
+                    params: data.getData,
+                  },
                   ...success({
                     data,
                     headers: res.headers,
@@ -456,6 +496,12 @@ function getProxy(fn, apiConfig = {}) {
               }
               ctx.emit('cnfapi:res:reject', {
                 fnName: apiOpts.fnName,
+                req: {
+                  headers: apiConfig.headers,
+                  data: data.postData,
+                  qs: data.qs,
+                  params: data.getData,
+                },
                 ...fail({
                   retcode: serverData.retcode,
                   msg: serverData.msg,
@@ -483,6 +529,12 @@ function getProxy(fn, apiConfig = {}) {
               if (errJSONMsg.toLowerCase().includes('abort')) {
                 ctx.emit('cnfapi:res:reject', {
                   fnName: apiOpts.fnName,
+                  req: {
+                    headers: apiConfig.headers,
+                    data: data.postData,
+                    qs: data.qs,
+                    params: data.getData,
+                  },
                   ...fail({
                     retcode: retcode.OTHER,
                     msg: getType(err) === 'error' ? err.toString() : JSON.stringify(err),
@@ -497,6 +549,12 @@ function getProxy(fn, apiConfig = {}) {
                 if (isEnd) {
                   reqTime = 0;
                   ctx.emit('cnfapi:res:reject', {
+                    req: {
+                      headers: apiConfig.headers,
+                      data: data.postData,
+                      qs: data.qs,
+                      params: data.getData,
+                    },
                     fnName: apiOpts.fnName,
                     ...fail({
                       retcode: retcode.OTHER,
@@ -513,6 +571,12 @@ function getProxy(fn, apiConfig = {}) {
             }).catch((catchErr) => {
               reqTime = 0;
               ctx.emit('cnfapi:res:catch', {
+                req: {
+                  headers: apiConfig.headers,
+                  data: data.postData,
+                  qs: data.qs,
+                  params: data.getData,
+                },
                 fnName: apiOpts.fnName,
                 ...fail({
                   retcode: retcode.CATCH,
