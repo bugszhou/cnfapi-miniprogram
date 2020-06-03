@@ -417,7 +417,7 @@ function getProxy(fn, apiConfig = {}) {
                 });
               }
               if (typeof apiOpts.resSuccessCallback === 'function') {
-                return apiOpts.resSuccessCallback.bind(ctx)(serverData, (err, resData, retcode = 200) => {
+                return apiOpts.resSuccessCallback.bind(apiConfig)(serverData, (err, resData, retcode = 200) => {
                   if (!err) {
                     reqTime = 0;
                     /**
@@ -440,10 +440,15 @@ function getProxy(fn, apiConfig = {}) {
                         retcode,
                       }),
                     });
+                    const msgData = {};
+                    if (serverData.msg) {
+                      msgData.msg = serverData.msg;
+                    }
                     return resolve(success({
                       data: resData,
                       headers: res.headers,
                       retcode,
+                      ...msgData,
                     }));
                   }
                   ctx.emit('cnfapi:res:reject', {
