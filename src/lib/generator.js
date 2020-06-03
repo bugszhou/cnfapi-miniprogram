@@ -626,10 +626,15 @@ function getProxy(fn, apiConfig = {}) {
  * success return data
  */
 function success(res) {
+  const msgData = {};
+  if (res.msg) {
+    msgData.msg = res.msg;
+  }
   return {
     data: res.data,
     headers: res.headers,
     retcode: res.retcode,
+    ...msgData,
   };
 }
 
