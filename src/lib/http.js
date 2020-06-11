@@ -112,7 +112,6 @@ const https = {
               info: {
                 errCode: res.statusCode,
                 msg: res.data,
-                tip: res.data,
               },
               data: {},
             };
