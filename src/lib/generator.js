@@ -194,51 +194,49 @@ function getParams(params) {
  */
 function serialize(data, vaild, cb = () => {
 }) {
-  setTimeout(() => {
-    const retData = {
-        retcode: 'FE-5000',
-        errMsg: '',
-        data: {},
-      },
-      qs = [],
-      getData = {},
-      postData = {},
-      isVaild = Object.keys(vaild).every((param) => {
-        const item = vaild[param],
-          { method } = item,
-          { required } = item,
-          val = data[param],
-          vaildResult = isVaildFn(val, param, required);
-        if (!vaildResult.result) {
-          retData.errMsg = vaildResult.errMsg;
-          return false;
-        }
+  const retData = {
+      retcode: 'FE-5000',
+      errMsg: '',
+      data: {},
+    },
+    qs = [],
+    getData = {},
+    postData = {},
+    isVaild = Object.keys(vaild).every((param) => {
+      const item = vaild[param],
+        { method } = item,
+        { required } = item,
+        val = data[param],
+        vaildResult = isVaildFn(val, param, required);
+      if (!vaildResult.result) {
+        retData.errMsg = vaildResult.errMsg;
+        return false;
+      }
 
-        if (typeof val === 'undefined' || val == null) {
-          return true;
-        }
-
-        if (method.toUpperCase() === 'GET') {
-          getData[param] = val;
-          qs.push(`${param}=${encodeURIComponent(val)}`);
-        } else {
-          postData[param] = val;
-        }
-
+      if (typeof val === 'undefined' || val == null) {
         return true;
-      });
-    if (isVaild) {
-      retData.retcode = retcode.OK;
-      retData.data = {
-        qs: qs.join('&'),
-        postData,
-        getData,
-      };
-    } else {
-      retData.retcode = retcode.PARAM;
-    }
-    cb(retData);
-  }, 0);
+      }
+
+      if (method.toUpperCase() === 'GET') {
+        getData[param] = val;
+        qs.push(`${param}=${encodeURIComponent(val)}`);
+      } else {
+        postData[param] = val;
+      }
+
+      return true;
+    });
+  if (isVaild) {
+    retData.retcode = retcode.OK;
+    retData.data = {
+      qs: qs.join('&'),
+      postData,
+      getData,
+    };
+  } else {
+    retData.retcode = retcode.PARAM;
+  }
+  cb(retData);
 }
 
 function isVaildFn(val, key, required) {
